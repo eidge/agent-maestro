@@ -16,16 +16,16 @@ export class Git {
 
   constructor(private readonly cwd?: string) {}
 
-  getCurrentBranchName(): string {
+  async getCurrentBranchName(): Promise<string> {
     return this.run(["rev-parse", "--abbrev-ref", "HEAD"]);
   }
 
-  getBaseBranchName(): string {
+  async getBaseBranchName(): Promise<string> {
     if (this.baseBranchName) return this.baseBranchName
 
     // Try to resolve via the remote's cached default branch
     try {
-      const ref = this.run(["symbolic-ref", "refs/remotes/origin/HEAD"]);
+      const ref = await this.run(["symbolic-ref", "refs/remotes/origin/HEAD"]);
       this.baseBranchName = ref.replace("refs/remotes/origin/", "");
       return this.baseBranchName
     } catch {
@@ -34,7 +34,7 @@ export class Git {
 
     for (const candidate of ["main", "master"]) {
       try {
-        this.run(["rev-parse", "--verify", candidate]);
+        await this.run(["rev-parse", "--verify", candidate]);
         this.baseBranchName = candidate;
         return this.baseBranchName
       } catch {
@@ -47,13 +47,13 @@ export class Git {
     );
   }
 
-  getCommitsSinceBase(): CommitInfo[] {
-    const base = this.getBaseBranchName();
+  async getCommitsSinceBase(): Promise<CommitInfo[]> {
+    const base = await this.getBaseBranchName();
     const separator = "---commit---";
     const fieldSep = "---field---";
     const format = [`%s`, `%b`, `%H`].join(fieldSep);
 
-    const output = this.run([
+    const output = await this.run([
       "log",
       `${base}..HEAD`,
       `--pretty=format:${format}${separator}`,
@@ -75,12 +75,12 @@ export class Git {
       });
   }
 
-  getUncommitedFiles(): ChangedFile[] {
+  async getUncommitedFiles(): Promise<ChangedFile[]> {
     // Numstat for both staged and unstaged changes against HEAD
-    const output = this.run(["diff", "HEAD", "--numstat"]);
+    const output = await this.run(["diff", "HEAD", "--numstat"]);
     if (!output) return [];
 
-    const statusOutput = this.run(["diff", "HEAD", "--name-status"]);
+    const statusOutput = await this.run(["diff", "HEAD", "--name-status"]);
 
     const statusMap = new Map<string, string>();
     for (const line of statusOutput.split("\n")) {
@@ -110,8 +110,8 @@ export class Git {
     });
   }
 
-  getChangedFilesForCommit(commit: CommitInfo): ChangedFile[] {
-    const output = this.run([
+  async getChangedFilesForCommit(commit: CommitInfo): Promise<ChangedFile[]> {
+    const output = await this.run([
       "diff-tree",
       "--no-commit-id",
       "--numstat",
@@ -122,7 +122,7 @@ export class Git {
     if (!output) return [];
 
     // Get the list of added/deleted/modified files for this commit
-    const statusOutput = this.run([
+    const statusOutput = await this.run([
       "diff-tree",
       "--no-commit-id",
       "--diff-filter=ADM",
@@ -159,18 +159,21 @@ export class Git {
     });
   }
 
-  private run(args: string[]): string {
-    const result = Bun.spawnSync(["git", ...args], {
+  private async run(args: string[]): Promise<string> {
+    const proc = Bun.spawn(["git", ...args], {
       cwd: this.cwd,
       stdout: "pipe",
       stderr: "pipe",
     });
 
-    if (result.exitCode !== 0) {
-      const stderr = result.stderr.toString().trim();
-      throw new Error(`git ${args.join(" ")} failed: ${stderr}`);
+    const exitCode = await proc.exited;
+
+    if (exitCode !== 0) {
+      const stderr = await new Response(proc.stderr).text();
+      throw new Error(`git ${args.join(" ")} failed: ${stderr.trim()}`);
     }
 
-    return result.stdout.toString().trim();
+    const stdout = await new Response(proc.stdout).text();
+    return stdout.trim();
   }
 }

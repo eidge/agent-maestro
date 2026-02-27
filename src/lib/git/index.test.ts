@@ -31,28 +31,28 @@ afterEach(async () => {
 });
 
 describe("getCurrentBranchName", () => {
-  test("returns the current branch", () => {
+  test("returns the current branch", async () => {
     const git = new Git(dir);
-    expect(git.getCurrentBranchName()).toBe("main");
+    expect(await git.getCurrentBranchName()).toBe("main");
   });
 
-  test("returns a non-default branch after checkout", () => {
+  test("returns a non-default branch after checkout", async () => {
     runGitCmd(dir, ["checkout", "-b", "feature/foo"]);
     const git = new Git(dir);
-    expect(git.getCurrentBranchName()).toBe("feature/foo");
+    expect(await git.getCurrentBranchName()).toBe("feature/foo");
   });
 });
 
 describe("getBaseBranchName", () => {
-  test("returns main when it exists", () => {
+  test("returns main when it exists", async () => {
     const git = new Git(dir);
-    expect(git.getBaseBranchName()).toBe("main");
+    expect(await git.getBaseBranchName()).toBe("main");
   });
 
-  test("returns master when main does not exist", () => {
+  test("returns master when main does not exist", async () => {
     runGitCmd(dir, ["branch", "-m", "main", "master"]);
     const git = new Git(dir);
-    expect(git.getBaseBranchName()).toBe("master");
+    expect(await git.getBaseBranchName()).toBe("master");
   });
 
   test("resolves via origin/HEAD when a remote is set", async () => {
@@ -68,27 +68,27 @@ describe("getBaseBranchName", () => {
     runGitCmd(dir, ["branch", "-D", "main"]);
 
     const git = new Git(dir);
-    expect(git.getBaseBranchName()).toBe("develop");
+    expect(await git.getBaseBranchName()).toBe("develop");
 
     await rm(remoteDir, { recursive: true });
   });
 
-  test("throws when neither main nor master exists and no remote", () => {
+  test("throws when neither main nor master exists and no remote", async () => {
     runGitCmd(dir, ["branch", "-m", "main", "something-else"]);
     const git = new Git(dir);
-    expect(() => git.getBaseBranchName()).toThrow(
+    expect(git.getBaseBranchName()).rejects.toThrow(
       "Could not determine base branch",
     );
   });
 });
 
 describe("getCommitsSinceBase", () => {
-  test("returns empty array when on the base branch with no new commits", () => {
+  test("returns empty array when on the base branch with no new commits", async () => {
     const git = new Git(dir);
-    expect(git.getCommitsSinceBase()).toEqual([]);
+    expect(await git.getCommitsSinceBase()).toEqual([]);
   });
 
-  test("returns empty array when base branch has extra commits ahead of branch point", () => {
+  test("returns empty array when base branch has extra commits ahead of branch point", async () => {
     runGitCmd(dir, ["checkout", "-b", "feature/early"]);
     runGitCmd(dir, ["checkout", "main"]);
     runGitCmd(dir, ["commit", "--allow-empty", "-m", "main commit 1"]);
@@ -96,23 +96,23 @@ describe("getCommitsSinceBase", () => {
     runGitCmd(dir, ["checkout", "feature/early"]);
 
     const git = new Git(dir);
-    expect(git.getCommitsSinceBase()).toEqual([]);
+    expect(await git.getCommitsSinceBase()).toEqual([]);
   });
 
-  test("returns empty array on a feature branch with no new commits", () => {
+  test("returns empty array on a feature branch with no new commits", async () => {
     runGitCmd(dir, ["checkout", "-b", "feature/empty"]);
 
     const git = new Git(dir);
-    expect(git.getCommitsSinceBase()).toEqual([]);
+    expect(await git.getCommitsSinceBase()).toEqual([]);
   });
 
-  test("returns commits made on a feature branch", () => {
+  test("returns commits made on a feature branch", async () => {
     runGitCmd(dir, ["checkout", "-b", "feature/stuff"]);
     runGitCmd(dir, ["commit", "--allow-empty", "-m", "first feature commit"]);
     runGitCmd(dir, ["commit", "--allow-empty", "-m", "second feature commit"]);
 
     const git = new Git(dir);
-    const commits = git.getCommitsSinceBase();
+    const commits = await git.getCommitsSinceBase();
 
     expect(commits).toHaveLength(2);
     expect(commits[0]!.title).toBe("second feature commit");
@@ -122,7 +122,7 @@ describe("getCommitsSinceBase", () => {
     expect(commits[0]!.sha).not.toBe(commits[1]!.sha);
   });
 
-  test("includes commit body", () => {
+  test("includes commit body", async () => {
     runGitCmd(dir, ["checkout", "-b", "feature/with-body"]);
     runGitCmd(dir, [
       "commit",
@@ -132,7 +132,7 @@ describe("getCommitsSinceBase", () => {
     ]);
 
     const git = new Git(dir);
-    const commits = git.getCommitsSinceBase();
+    const commits = await git.getCommitsSinceBase();
 
     expect(commits).toHaveLength(1);
     expect(commits[0]!.title).toBe("title line");
@@ -140,26 +140,26 @@ describe("getCommitsSinceBase", () => {
     expect(commits[0]!.body).toContain("with multiple lines");
   });
 
-  test("returns empty body when commit has no body", () => {
+  test("returns empty body when commit has no body", async () => {
     runGitCmd(dir, ["checkout", "-b", "feature/no-body"]);
     runGitCmd(dir, ["commit", "--allow-empty", "-m", "just a title"]);
 
     const git = new Git(dir);
-    const commits = git.getCommitsSinceBase();
+    const commits = await git.getCommitsSinceBase();
 
     expect(commits).toHaveLength(1);
     expect(commits[0]!.title).toBe("just a title");
     expect(commits[0]!.body).toBeNull();
   });
 
-  test("does not include commits from the base branch", () => {
+  test("does not include commits from the base branch", async () => {
     // Add another commit on main before branching
     runGitCmd(dir, ["commit", "--allow-empty", "-m", "second main commit"]);
     runGitCmd(dir, ["checkout", "-b", "feature/scoped"]);
     runGitCmd(dir, ["commit", "--allow-empty", "-m", "branch commit"]);
 
     const git = new Git(dir);
-    const commits = git.getCommitsSinceBase();
+    const commits = await git.getCommitsSinceBase();
 
     expect(commits).toHaveLength(1);
     expect(commits[0]!.title).toBe("branch commit");
@@ -178,8 +178,8 @@ describe("getChangedFilesForCommit", () => {
     runGitCmd(dir, ["commit", "-m", "add hello"]);
 
     const git = new Git(dir);
-    const commits = git.getCommitsSinceBase();
-    const files = git.getChangedFilesForCommit(commits[0]!);
+    const commits = await git.getCommitsSinceBase();
+    const files = await git.getChangedFilesForCommit(commits[0]!);
 
     expect(files).toEqual([
       { path: "hello.txt", insertions: 1, deletions: 0, operation: "created" },
@@ -195,8 +195,8 @@ describe("getChangedFilesForCommit", () => {
     runGitCmd(dir, ["commit", "-m", "remove file"]);
 
     const git = new Git(dir);
-    const commits = git.getCommitsSinceBase();
-    const files = git.getChangedFilesForCommit(commits[0]!);
+    const commits = await git.getCommitsSinceBase();
+    const files = await git.getChangedFilesForCommit(commits[0]!);
 
     expect(files).toEqual([
       { path: "remove-me.txt", insertions: 0, deletions: 1, operation: "removed" },
@@ -212,8 +212,8 @@ describe("getChangedFilesForCommit", () => {
     runGitCmd(dir, ["commit", "-m", "edit file"]);
 
     const git = new Git(dir);
-    const commits = git.getCommitsSinceBase();
-    const files = git.getChangedFilesForCommit(commits[0]!);
+    const commits = await git.getCommitsSinceBase();
+    const files = await git.getChangedFilesForCommit(commits[0]!);
 
     expect(files).toEqual([
       { path: "edit-me.txt", insertions: 2, deletions: 0, operation: "changed" },
@@ -230,8 +230,8 @@ describe("getChangedFilesForCommit", () => {
     runGitCmd(dir, ["commit", "-m", "multiple changes"]);
 
     const git = new Git(dir);
-    const commits = git.getCommitsSinceBase();
-    const files = git.getChangedFilesForCommit(commits[0]!);
+    const commits = await git.getCommitsSinceBase();
+    const files = await git.getChangedFilesForCommit(commits[0]!);
 
     const byPath = Object.fromEntries(files.map((f) => [f.path, f]));
     expect(files).toHaveLength(2);
@@ -239,13 +239,13 @@ describe("getChangedFilesForCommit", () => {
     expect(byPath["existing.txt"]!.operation).toBe("changed");
   });
 
-  test("returns empty array for a commit with no file changes", () => {
+  test("returns empty array for a commit with no file changes", async () => {
     runGitCmd(dir, ["checkout", "-b", "feature/empty-commit"]);
     runGitCmd(dir, ["commit", "--allow-empty", "-m", "empty"]);
 
     const git = new Git(dir);
-    const commits = git.getCommitsSinceBase();
-    const files = git.getChangedFilesForCommit(commits[0]!);
+    const commits = await git.getCommitsSinceBase();
+    const files = await git.getChangedFilesForCommit(commits[0]!);
 
     expect(files).toEqual([]);
   });
@@ -256,9 +256,9 @@ describe("getUncommitedFiles", () => {
     await bunWriteFile(join(dir, path), content);
   }
 
-  test("returns empty array when there are no uncommitted changes", () => {
+  test("returns empty array when there are no uncommitted changes", async () => {
     const git = new Git(dir);
-    expect(git.getUncommitedFiles()).toEqual([]);
+    expect(await git.getUncommitedFiles()).toEqual([]);
   });
 
   test("returns staged files", async () => {
@@ -266,7 +266,7 @@ describe("getUncommitedFiles", () => {
     runGitCmd(dir, ["add", "staged.txt"]);
 
     const git = new Git(dir);
-    const files = git.getUncommitedFiles();
+    const files = await git.getUncommitedFiles();
 
     expect(files).toEqual([
       { path: "staged.txt", insertions: 1, deletions: 0, operation: "created" },
@@ -281,7 +281,7 @@ describe("getUncommitedFiles", () => {
     await writeFile("tracked.txt", "original\nmodified\n");
 
     const git = new Git(dir);
-    const files = git.getUncommitedFiles();
+    const files = await git.getUncommitedFiles();
 
     expect(files).toEqual([
       { path: "tracked.txt", insertions: 1, deletions: 0, operation: "changed" },
@@ -301,7 +301,7 @@ describe("getUncommitedFiles", () => {
     await writeFile("existing.txt", "line one\nline two\n");
 
     const git = new Git(dir);
-    const files = git.getUncommitedFiles();
+    const files = await git.getUncommitedFiles();
     const byPath = Object.fromEntries(files.map((f) => [f.path, f]));
 
     expect(files).toHaveLength(2);
@@ -317,7 +317,7 @@ describe("getUncommitedFiles", () => {
     runGitCmd(dir, ["rm", "doomed.txt"]);
 
     const git = new Git(dir);
-    const files = git.getUncommitedFiles();
+    const files = await git.getUncommitedFiles();
 
     expect(files).toEqual([
       { path: "doomed.txt", insertions: 0, deletions: 1, operation: "removed" },
