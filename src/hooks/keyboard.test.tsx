@@ -1,4 +1,4 @@
-import { describe, test, expect, afterEach } from "bun:test"
+import { describe, test, expect, afterEach, spyOn } from "bun:test"
 import { testRender } from "@opentui/react/test-utils"
 import { Provider, createStore } from "jotai"
 import { act, Component, useState, type ReactNode } from "react"
@@ -252,6 +252,7 @@ describe("useKeyboardShortcut", () => {
   })
 
   test("throws when registering a duplicate shortcut", async () => {
+    const spy = spyOn(console, "error").mockImplementation(() => {});
     testSetup = await mount(
       <Provider store={createStore()}>
         <ErrorBoundary>
@@ -267,6 +268,7 @@ describe("useKeyboardShortcut", () => {
     expect(testSetup.captureCharFrame()).toContain(
       "error:Keyboard shortcut (x) already registered.",
     )
+    spy.mockRestore();
   })
 
   test("supports multiple non-conflicting shortcuts simultaneously", async () => {

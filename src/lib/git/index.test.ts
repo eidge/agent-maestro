@@ -1,0 +1,326 @@
+import { describe, test, expect, beforeEach, afterEach } from "bun:test";
+import { mkdtemp, rm, writeFile as bunWriteFile } from "fs/promises";
+import { join } from "path";
+import { tmpdir } from "os";
+import { Git } from "./index.ts";
+
+let dir: string;
+
+function runGitCmd(cwd: string, args: string[]) {
+  const result = Bun.spawnSync(["git", ...args], {
+    cwd,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  if (result.exitCode !== 0) {
+    throw new Error(result.stderr.toString());
+  }
+}
+
+
+beforeEach(async () => {
+  dir = await mkdtemp(join(tmpdir(), "git-test-"));
+  runGitCmd(dir, ["init", "-b", "main"]);
+  runGitCmd(dir, ["config", "user.email", "test@test.com"]);
+  runGitCmd(dir, ["config", "user.name", "Test"]);
+  runGitCmd(dir, ["commit", "--allow-empty", "-m", "init"]);
+});
+
+afterEach(async () => {
+  await rm(dir, { recursive: true });
+});
+
+describe("getCurrentBranchName", () => {
+  test("returns the current branch", () => {
+    const git = new Git(dir);
+    expect(git.getCurrentBranchName()).toBe("main");
+  });
+
+  test("returns a non-default branch after checkout", () => {
+    runGitCmd(dir, ["checkout", "-b", "feature/foo"]);
+    const git = new Git(dir);
+    expect(git.getCurrentBranchName()).toBe("feature/foo");
+  });
+});
+
+describe("getBaseBranchName", () => {
+  test("returns main when it exists", () => {
+    const git = new Git(dir);
+    expect(git.getBaseBranchName()).toBe("main");
+  });
+
+  test("returns master when main does not exist", () => {
+    runGitCmd(dir, ["branch", "-m", "main", "master"]);
+    const git = new Git(dir);
+    expect(git.getBaseBranchName()).toBe("master");
+  });
+
+  test("resolves via origin/HEAD when a remote is set", async () => {
+    // Create a bare "remote" repo with a default branch called "develop"
+    const remoteDir = await mkdtemp(join(tmpdir(), "git-remote-"));
+    runGitCmd(remoteDir, ["init", "--bare", "-b", "develop"]);
+
+    // Push main as "develop" to the remote, then delete local main
+    runGitCmd(dir, ["remote", "add", "origin", remoteDir]);
+    runGitCmd(dir, ["push", "-u", "origin", "main:develop"]);
+    runGitCmd(dir, ["remote", "set-head", "origin", "develop"]);
+    runGitCmd(dir, ["checkout", "-b", "feature/bar"]);
+    runGitCmd(dir, ["branch", "-D", "main"]);
+
+    const git = new Git(dir);
+    expect(git.getBaseBranchName()).toBe("develop");
+
+    await rm(remoteDir, { recursive: true });
+  });
+
+  test("throws when neither main nor master exists and no remote", () => {
+    runGitCmd(dir, ["branch", "-m", "main", "something-else"]);
+    const git = new Git(dir);
+    expect(() => git.getBaseBranchName()).toThrow(
+      "Could not determine base branch",
+    );
+  });
+});
+
+describe("getCommitsSinceBase", () => {
+  test("returns empty array when on the base branch with no new commits", () => {
+    const git = new Git(dir);
+    expect(git.getCommitsSinceBase()).toEqual([]);
+  });
+
+  test("returns empty array when base branch has extra commits ahead of branch point", () => {
+    runGitCmd(dir, ["checkout", "-b", "feature/early"]);
+    runGitCmd(dir, ["checkout", "main"]);
+    runGitCmd(dir, ["commit", "--allow-empty", "-m", "main commit 1"]);
+    runGitCmd(dir, ["commit", "--allow-empty", "-m", "main commit 2"]);
+    runGitCmd(dir, ["checkout", "feature/early"]);
+
+    const git = new Git(dir);
+    expect(git.getCommitsSinceBase()).toEqual([]);
+  });
+
+  test("returns empty array on a feature branch with no new commits", () => {
+    runGitCmd(dir, ["checkout", "-b", "feature/empty"]);
+
+    const git = new Git(dir);
+    expect(git.getCommitsSinceBase()).toEqual([]);
+  });
+
+  test("returns commits made on a feature branch", () => {
+    runGitCmd(dir, ["checkout", "-b", "feature/stuff"]);
+    runGitCmd(dir, ["commit", "--allow-empty", "-m", "first feature commit"]);
+    runGitCmd(dir, ["commit", "--allow-empty", "-m", "second feature commit"]);
+
+    const git = new Git(dir);
+    const commits = git.getCommitsSinceBase();
+
+    expect(commits).toHaveLength(2);
+    expect(commits[0]!.title).toBe("second feature commit");
+    expect(commits[1]!.title).toBe("first feature commit");
+    expect(commits[0]!.sha).toMatch(/^[0-9a-f]{40}$/);
+    expect(commits[1]!.sha).toMatch(/^[0-9a-f]{40}$/);
+    expect(commits[0]!.sha).not.toBe(commits[1]!.sha);
+  });
+
+  test("includes commit body", () => {
+    runGitCmd(dir, ["checkout", "-b", "feature/with-body"]);
+    runGitCmd(dir, [
+      "commit",
+      "--allow-empty",
+      "-m",
+      "title line\n\nThis is the body\nwith multiple lines",
+    ]);
+
+    const git = new Git(dir);
+    const commits = git.getCommitsSinceBase();
+
+    expect(commits).toHaveLength(1);
+    expect(commits[0]!.title).toBe("title line");
+    expect(commits[0]!.body).toContain("This is the body");
+    expect(commits[0]!.body).toContain("with multiple lines");
+  });
+
+  test("returns empty body when commit has no body", () => {
+    runGitCmd(dir, ["checkout", "-b", "feature/no-body"]);
+    runGitCmd(dir, ["commit", "--allow-empty", "-m", "just a title"]);
+
+    const git = new Git(dir);
+    const commits = git.getCommitsSinceBase();
+
+    expect(commits).toHaveLength(1);
+    expect(commits[0]!.title).toBe("just a title");
+    expect(commits[0]!.body).toBeNull();
+  });
+
+  test("does not include commits from the base branch", () => {
+    // Add another commit on main before branching
+    runGitCmd(dir, ["commit", "--allow-empty", "-m", "second main commit"]);
+    runGitCmd(dir, ["checkout", "-b", "feature/scoped"]);
+    runGitCmd(dir, ["commit", "--allow-empty", "-m", "branch commit"]);
+
+    const git = new Git(dir);
+    const commits = git.getCommitsSinceBase();
+
+    expect(commits).toHaveLength(1);
+    expect(commits[0]!.title).toBe("branch commit");
+  });
+});
+
+describe("getChangedFilesForCommit", () => {
+  async function writeAndAdd(path: string, content: string) {
+    await bunWriteFile(join(dir, path), content);
+    runGitCmd(dir, ["add", path]);
+  }
+
+  test("returns a created file", async () => {
+    runGitCmd(dir, ["checkout", "-b", "feature/add"]);
+    await writeAndAdd("hello.txt", "hello world\n");
+    runGitCmd(dir, ["commit", "-m", "add hello"]);
+
+    const git = new Git(dir);
+    const commits = git.getCommitsSinceBase();
+    const files = git.getChangedFilesForCommit(commits[0]!);
+
+    expect(files).toEqual([
+      { path: "hello.txt", insertions: 1, deletions: 0, operation: "created" },
+    ]);
+  });
+
+  test("returns a removed file", async () => {
+    await writeAndAdd("remove-me.txt", "gone soon\n");
+    runGitCmd(dir, ["commit", "-m", "add file to remove later"]);
+
+    runGitCmd(dir, ["checkout", "-b", "feature/remove"]);
+    runGitCmd(dir, ["rm", "remove-me.txt"]);
+    runGitCmd(dir, ["commit", "-m", "remove file"]);
+
+    const git = new Git(dir);
+    const commits = git.getCommitsSinceBase();
+    const files = git.getChangedFilesForCommit(commits[0]!);
+
+    expect(files).toEqual([
+      { path: "remove-me.txt", insertions: 0, deletions: 1, operation: "removed" },
+    ]);
+  });
+
+  test("returns a changed file", async () => {
+    await writeAndAdd("edit-me.txt", "line one\n");
+    runGitCmd(dir, ["commit", "-m", "add file to edit later"]);
+
+    runGitCmd(dir, ["checkout", "-b", "feature/edit"]);
+    await writeAndAdd("edit-me.txt", "line one\nline two\nline three\n");
+    runGitCmd(dir, ["commit", "-m", "edit file"]);
+
+    const git = new Git(dir);
+    const commits = git.getCommitsSinceBase();
+    const files = git.getChangedFilesForCommit(commits[0]!);
+
+    expect(files).toEqual([
+      { path: "edit-me.txt", insertions: 2, deletions: 0, operation: "changed" },
+    ]);
+  });
+
+  test("returns multiple changed files in a single commit", async () => {
+    await writeAndAdd("existing.txt", "original\n");
+    runGitCmd(dir, ["commit", "-m", "setup"]);
+
+    runGitCmd(dir, ["checkout", "-b", "feature/multi"]);
+    await writeAndAdd("new-file.txt", "I am new\n");
+    await writeAndAdd("existing.txt", "modified\n");
+    runGitCmd(dir, ["commit", "-m", "multiple changes"]);
+
+    const git = new Git(dir);
+    const commits = git.getCommitsSinceBase();
+    const files = git.getChangedFilesForCommit(commits[0]!);
+
+    const byPath = Object.fromEntries(files.map((f) => [f.path, f]));
+    expect(files).toHaveLength(2);
+    expect(byPath["new-file.txt"]!.operation).toBe("created");
+    expect(byPath["existing.txt"]!.operation).toBe("changed");
+  });
+
+  test("returns empty array for a commit with no file changes", () => {
+    runGitCmd(dir, ["checkout", "-b", "feature/empty-commit"]);
+    runGitCmd(dir, ["commit", "--allow-empty", "-m", "empty"]);
+
+    const git = new Git(dir);
+    const commits = git.getCommitsSinceBase();
+    const files = git.getChangedFilesForCommit(commits[0]!);
+
+    expect(files).toEqual([]);
+  });
+});
+
+describe("getUncommitedFiles", () => {
+  async function writeFile(path: string, content: string) {
+    await bunWriteFile(join(dir, path), content);
+  }
+
+  test("returns empty array when there are no uncommitted changes", () => {
+    const git = new Git(dir);
+    expect(git.getUncommitedFiles()).toEqual([]);
+  });
+
+  test("returns staged files", async () => {
+    await writeFile("staged.txt", "hello\n");
+    runGitCmd(dir, ["add", "staged.txt"]);
+
+    const git = new Git(dir);
+    const files = git.getUncommitedFiles();
+
+    expect(files).toEqual([
+      { path: "staged.txt", insertions: 1, deletions: 0, operation: "created" },
+    ]);
+  });
+
+  test("returns unstaged changes to tracked files", async () => {
+    await writeFile("tracked.txt", "original\n");
+    runGitCmd(dir, ["add", "tracked.txt"]);
+    runGitCmd(dir, ["commit", "-m", "add tracked"]);
+
+    await writeFile("tracked.txt", "original\nmodified\n");
+
+    const git = new Git(dir);
+    const files = git.getUncommitedFiles();
+
+    expect(files).toEqual([
+      { path: "tracked.txt", insertions: 1, deletions: 0, operation: "changed" },
+    ]);
+  });
+
+  test("returns both staged and unstaged changes", async () => {
+    await writeFile("existing.txt", "line one\n");
+    runGitCmd(dir, ["add", "existing.txt"]);
+    runGitCmd(dir, ["commit", "-m", "setup"]);
+
+    // Stage a new file
+    await writeFile("new.txt", "new content\n");
+    runGitCmd(dir, ["add", "new.txt"]);
+
+    // Modify an existing file without staging
+    await writeFile("existing.txt", "line one\nline two\n");
+
+    const git = new Git(dir);
+    const files = git.getUncommitedFiles();
+    const byPath = Object.fromEntries(files.map((f) => [f.path, f]));
+
+    expect(files).toHaveLength(2);
+    expect(byPath["new.txt"]!.operation).toBe("created");
+    expect(byPath["existing.txt"]!.operation).toBe("changed");
+  });
+
+  test("returns removed files", async () => {
+    await writeFile("doomed.txt", "bye\n");
+    runGitCmd(dir, ["add", "doomed.txt"]);
+    runGitCmd(dir, ["commit", "-m", "add doomed"]);
+
+    runGitCmd(dir, ["rm", "doomed.txt"]);
+
+    const git = new Git(dir);
+    const files = git.getUncommitedFiles();
+
+    expect(files).toEqual([
+      { path: "doomed.txt", insertions: 0, deletions: 1, operation: "removed" },
+    ]);
+  });
+});
