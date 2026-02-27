@@ -1,26 +1,6 @@
 import { createCliRenderer } from "@opentui/core";
-import { createRoot, useRenderer } from "@opentui/react";
-import { SplashScreen } from "./screens/splash";
-import { useKeyboardShortcutRegistry } from "./hooks/keyboard";
-import { useEffect } from "react";
-
-function App() {
-  const shortcuts = useKeyboardShortcutRegistry()
-  const renderer = useRenderer()
-
-  const onDismissSplashScreen = () => {
-    renderer.destroy()
-    process.exit(0)
-  }
-
-  useEffect(() => {
-    console.log(shortcuts)
-  }, [shortcuts])
-
-  return (
-    <SplashScreen onDismiss={onDismissSplashScreen} />
-  );
-}
+import { createRoot } from "@opentui/react";
+import { App } from "./app";
 
 const renderer = await createCliRenderer({
   exitOnCtrlC: true,
