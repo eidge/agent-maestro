@@ -6,6 +6,7 @@ export interface CommitInfo {
 
 export interface ChangedFile {
   path: string,
+  commitSha: string,
   insertions: number,
   deletions: number,
   operation: "created" | "removed" | "changed"
@@ -103,6 +104,7 @@ export class Git {
       }
       return {
         path: path!,
+        commitSha: "uncommitted",
         insertions: Number(ins),
         deletions: Number(del),
         operation,
@@ -121,7 +123,6 @@ export class Git {
 
     if (!output) return [];
 
-    // Get the list of added/deleted/modified files for this commit
     const statusOutput = await this.run([
       "diff-tree",
       "--no-commit-id",
@@ -152,6 +153,7 @@ export class Git {
       }
       return {
         path: path!,
+        commitSha: commit.sha,
         insertions: Number(ins),
         deletions: Number(del),
         operation,

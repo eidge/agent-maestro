@@ -182,7 +182,7 @@ describe("getChangedFilesForCommit", () => {
     const files = await git.getChangedFilesForCommit(commits[0]!);
 
     expect(files).toEqual([
-      { path: "hello.txt", insertions: 1, deletions: 0, operation: "created" },
+      { path: "hello.txt", commitSha: commits[0]!.sha, insertions: 1, deletions: 0, operation: "created" },
     ]);
   });
 
@@ -199,7 +199,7 @@ describe("getChangedFilesForCommit", () => {
     const files = await git.getChangedFilesForCommit(commits[0]!);
 
     expect(files).toEqual([
-      { path: "remove-me.txt", insertions: 0, deletions: 1, operation: "removed" },
+      { path: "remove-me.txt", commitSha: commits[0]!.sha, insertions: 0, deletions: 1, operation: "removed" },
     ]);
   });
 
@@ -216,7 +216,7 @@ describe("getChangedFilesForCommit", () => {
     const files = await git.getChangedFilesForCommit(commits[0]!);
 
     expect(files).toEqual([
-      { path: "edit-me.txt", insertions: 2, deletions: 0, operation: "changed" },
+      { path: "edit-me.txt", commitSha: commits[0]!.sha, insertions: 2, deletions: 0, operation: "changed" },
     ]);
   });
 
@@ -236,7 +236,9 @@ describe("getChangedFilesForCommit", () => {
     const byPath = Object.fromEntries(files.map((f) => [f.path, f]));
     expect(files).toHaveLength(2);
     expect(byPath["new-file.txt"]!.operation).toBe("created");
+    expect(byPath["new-file.txt"]!.commitSha).toBe(commits[0]!.sha);
     expect(byPath["existing.txt"]!.operation).toBe("changed");
+    expect(byPath["existing.txt"]!.commitSha).toBe(commits[0]!.sha);
   });
 
   test("returns empty array for a commit with no file changes", async () => {
@@ -269,7 +271,7 @@ describe("getUncommitedFiles", () => {
     const files = await git.getUncommitedFiles();
 
     expect(files).toEqual([
-      { path: "staged.txt", insertions: 1, deletions: 0, operation: "created" },
+      { path: "staged.txt", commitSha: "uncommitted", insertions: 1, deletions: 0, operation: "created" },
     ]);
   });
 
@@ -284,7 +286,7 @@ describe("getUncommitedFiles", () => {
     const files = await git.getUncommitedFiles();
 
     expect(files).toEqual([
-      { path: "tracked.txt", insertions: 1, deletions: 0, operation: "changed" },
+      { path: "tracked.txt", commitSha: "uncommitted", insertions: 1, deletions: 0, operation: "changed" },
     ]);
   });
 
@@ -306,7 +308,9 @@ describe("getUncommitedFiles", () => {
 
     expect(files).toHaveLength(2);
     expect(byPath["new.txt"]!.operation).toBe("created");
+    expect(byPath["new.txt"]!.commitSha).toBe("uncommitted");
     expect(byPath["existing.txt"]!.operation).toBe("changed");
+    expect(byPath["existing.txt"]!.commitSha).toBe("uncommitted");
   });
 
   test("returns removed files", async () => {
@@ -320,7 +324,7 @@ describe("getUncommitedFiles", () => {
     const files = await git.getUncommitedFiles();
 
     expect(files).toEqual([
-      { path: "doomed.txt", insertions: 0, deletions: 1, operation: "removed" },
+      { path: "doomed.txt", commitSha: "uncommitted", insertions: 0, deletions: 1, operation: "removed" },
     ]);
   });
 });
