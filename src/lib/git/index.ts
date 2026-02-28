@@ -191,13 +191,23 @@ export class Git {
   }
 
   async getFileDiff(file: ChangedFile): Promise<FileDiff> {
-    const unifiedDiff = file.commitSha === "uncommitted"
-      ? await this.run(["diff", "HEAD", "-U999999", "--", file.path])
-      : await this.run(["diff-tree", "-p", "-U999999", file.commitSha, "--", file.path]);
+    let unifiedDiff: string;
+    if (file.commitSha !== "uncommitted") {
+      unifiedDiff = await this.run(["diff-tree", "-p", "-U999999", file.commitSha, "--", file.path]);
+    } else {
+      unifiedDiff = await this.run(["diff", "HEAD", "-U999999", "--", file.path]);
+      if (!unifiedDiff) {
+        // File is untracked — git diff HEAD can't see it, compare against /dev/null
+        unifiedDiff = await this.run(
+          ["diff", "--no-index", "-U999999", "--", "/dev/null", file.path],
+          { allowedExitCodes: [0, 1] },
+        );
+      }
+    }
     return { path: file.path, unifiedDiff };
   }
 
-  private async run(args: string[]): Promise<string> {
+  private async run(args: string[], opts?: { allowedExitCodes?: number[] }): Promise<string> {
     const proc = Bun.spawn(["git", ...args], {
       cwd: this.cwd,
       stdout: "pipe",
@@ -205,8 +215,9 @@ export class Git {
     });
 
     const exitCode = await proc.exited;
+    const allowed = opts?.allowedExitCodes ?? [0];
 
-    if (exitCode !== 0) {
+    if (!allowed.includes(exitCode)) {
       const stderr = await new Response(proc.stderr).text();
       throw new Error(`git ${args.join(" ")} failed: ${stderr.trim()}`);
     }

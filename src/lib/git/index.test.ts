@@ -530,5 +530,16 @@ describe("getFileDiff", () => {
       expect(diff.path).toBe("doomed.txt");
       expect(diff.unifiedDiff).toContain("-bye");
     });
+
+    test("returns diff for an untracked file", async () => {
+      await writeFile("untracked.txt", "new content\n");
+
+      const git = new Git(dir);
+      const files = await git.getUncommitedFiles();
+      const diff = await git.getFileDiff(files[0]!);
+
+      expect(diff.path).toBe("untracked.txt");
+      expect(diff.unifiedDiff).toContain("+new content");
+    });
   });
 });
