@@ -12,6 +12,11 @@ export interface ChangedFile {
   operation: "created" | "removed" | "changed"
 }
 
+export interface FileDiff {
+  path: string,
+  unifiedDiff: string,
+}
+
 export class Git {
   private baseBranchName: string | null = null;
 
@@ -159,6 +164,13 @@ export class Git {
         operation,
       };
     });
+  }
+
+  async getFileDiff(file: ChangedFile): Promise<FileDiff> {
+    const unifiedDiff = file.commitSha === "uncommitted"
+      ? await this.run(["diff", "HEAD", "-U999999", "--", file.path])
+      : await this.run(["diff-tree", "-p", "-U999999", file.commitSha, "--", file.path]);
+    return { path: file.path, unifiedDiff };
   }
 
   private async run(args: string[]): Promise<string> {

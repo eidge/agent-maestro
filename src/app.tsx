@@ -6,7 +6,7 @@ import { MainScreen } from "./screens/main";
 type ScreenName = "splash" | "main"
 
 export function App() {
-  const [currentScreen, setCurrentScreen] = useState<ScreenName>("splash")
+  const [currentScreen, setCurrentScreen] = useState<ScreenName>("main")
   const shortcuts = useKeyboardShortcutRegistry()
 
   const onDismissSplashScreen = () => {

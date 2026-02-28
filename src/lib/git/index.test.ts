@@ -328,3 +328,158 @@ describe("getUncommitedFiles", () => {
     ]);
   });
 });
+
+describe("getFileDiff", () => {
+  async function writeFile(path: string, content: string) {
+    await bunWriteFile(join(dir, path), content);
+  }
+
+  async function writeAndAdd(path: string, content: string) {
+    await writeFile(path, content);
+    runGitCmd(dir, ["add", path]);
+  }
+
+  describe("committed files", () => {
+    test("returns diff for a created file", async () => {
+      runGitCmd(dir, ["checkout", "-b", "feature/diff-add"]);
+      await writeAndAdd("new.txt", "hello\nworld\n");
+      runGitCmd(dir, ["commit", "-m", "add new"]);
+
+      const git = new Git(dir);
+      const commits = await git.getCommitsSinceBase();
+      const files = await git.getChangedFilesForCommit(commits[0]!);
+      const diff = await git.getFileDiff(files[0]!);
+
+      expect(diff.path).toBe("new.txt");
+      expect(diff.unifiedDiff).toContain("+hello");
+      expect(diff.unifiedDiff).toContain("+world");
+    });
+
+    test("returns diff for a removed file", async () => {
+      await writeAndAdd("remove-me.txt", "goodbye\n");
+      runGitCmd(dir, ["commit", "-m", "add file"]);
+
+      runGitCmd(dir, ["checkout", "-b", "feature/diff-rm"]);
+      runGitCmd(dir, ["rm", "remove-me.txt"]);
+      runGitCmd(dir, ["commit", "-m", "remove file"]);
+
+      const git = new Git(dir);
+      const commits = await git.getCommitsSinceBase();
+      const files = await git.getChangedFilesForCommit(commits[0]!);
+      const diff = await git.getFileDiff(files[0]!);
+
+      expect(diff.path).toBe("remove-me.txt");
+      expect(diff.unifiedDiff).toContain("-goodbye");
+    });
+
+    test("returns diff for a changed file", async () => {
+      await writeAndAdd("edit.txt", "before\n");
+      runGitCmd(dir, ["commit", "-m", "add file"]);
+
+      runGitCmd(dir, ["checkout", "-b", "feature/diff-edit"]);
+      await writeAndAdd("edit.txt", "before\nafter\n");
+      runGitCmd(dir, ["commit", "-m", "edit file"]);
+
+      const git = new Git(dir);
+      const commits = await git.getCommitsSinceBase();
+      const files = await git.getChangedFilesForCommit(commits[0]!);
+      const diff = await git.getFileDiff(files[0]!);
+
+      expect(diff.path).toBe("edit.txt");
+      expect(diff.unifiedDiff).toContain("+after");
+      expect(diff.unifiedDiff).not.toContain("-before");
+    });
+
+    test("returns diff for only the specified file in a multi-file commit", async () => {
+      await writeAndAdd("a.txt", "aaa\n");
+      runGitCmd(dir, ["commit", "-m", "setup"]);
+
+      runGitCmd(dir, ["checkout", "-b", "feature/diff-multi"]);
+      await writeAndAdd("a.txt", "aaa\nbbb\n");
+      await writeAndAdd("b.txt", "new file\n");
+      runGitCmd(dir, ["commit", "-m", "multi change"]);
+
+      const git = new Git(dir);
+      const commits = await git.getCommitsSinceBase();
+      const files = await git.getChangedFilesForCommit(commits[0]!);
+      const byPath = Object.fromEntries(files.map((f) => [f.path, f]));
+
+      const diffA = await git.getFileDiff(byPath["a.txt"]!);
+      expect(diffA.path).toBe("a.txt");
+      expect(diffA.unifiedDiff).toContain("+bbb");
+      expect(diffA.unifiedDiff).not.toContain("b.txt");
+
+      const diffB = await git.getFileDiff(byPath["b.txt"]!);
+      expect(diffB.path).toBe("b.txt");
+      expect(diffB.unifiedDiff).toContain("+new file");
+      expect(diffB.unifiedDiff).not.toContain("a.txt");
+    });
+
+    test("includes full file context, not just surrounding lines", async () => {
+      const lines = Array.from({ length: 20 }, (_, i) => `line ${i + 1}`);
+      await writeAndAdd("big.txt", lines.join("\n") + "\n");
+      runGitCmd(dir, ["commit", "-m", "add big file"]);
+
+      runGitCmd(dir, ["checkout", "-b", "feature/diff-full"]);
+      lines[10] = "changed line 11";
+      await writeAndAdd("big.txt", lines.join("\n") + "\n");
+      runGitCmd(dir, ["commit", "-m", "edit middle"]);
+
+      const git = new Git(dir);
+      const commits = await git.getCommitsSinceBase();
+      const files = await git.getChangedFilesForCommit(commits[0]!);
+      const diff = await git.getFileDiff(files[0]!);
+
+      // All unchanged lines should appear as context
+      expect(diff.unifiedDiff).toContain(" line 1");
+      expect(diff.unifiedDiff).toContain(" line 5");
+      expect(diff.unifiedDiff).toContain(" line 15");
+      expect(diff.unifiedDiff).toContain(" line 20");
+      expect(diff.unifiedDiff).toContain("+changed line 11");
+      expect(diff.unifiedDiff).toContain("-line 11");
+    });
+  });
+
+  describe("uncommitted files", () => {
+    test("returns diff for a staged created file", async () => {
+      await writeFile("staged.txt", "staged content\n");
+      runGitCmd(dir, ["add", "staged.txt"]);
+
+      const git = new Git(dir);
+      const files = await git.getUncommitedFiles();
+      const diff = await git.getFileDiff(files[0]!);
+
+      expect(diff.path).toBe("staged.txt");
+      expect(diff.unifiedDiff).toContain("+staged content");
+    });
+
+    test("returns diff for an unstaged modified file", async () => {
+      await writeAndAdd("tracked.txt", "original\n");
+      runGitCmd(dir, ["commit", "-m", "add tracked"]);
+
+      await writeFile("tracked.txt", "original\nmodified\n");
+
+      const git = new Git(dir);
+      const files = await git.getUncommitedFiles();
+      const diff = await git.getFileDiff(files[0]!);
+
+      expect(diff.path).toBe("tracked.txt");
+      expect(diff.unifiedDiff).toContain("+modified");
+      expect(diff.unifiedDiff).not.toContain("-original");
+    });
+
+    test("returns diff for a removed file", async () => {
+      await writeAndAdd("doomed.txt", "bye\n");
+      runGitCmd(dir, ["commit", "-m", "add doomed"]);
+
+      runGitCmd(dir, ["rm", "doomed.txt"]);
+
+      const git = new Git(dir);
+      const files = await git.getUncommitedFiles();
+      const diff = await git.getFileDiff(files[0]!);
+
+      expect(diff.path).toBe("doomed.txt");
+      expect(diff.unifiedDiff).toContain("-bye");
+    });
+  });
+});
