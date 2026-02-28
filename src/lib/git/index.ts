@@ -82,39 +82,63 @@ export class Git {
   }
 
   async getUncommitedFiles(): Promise<ChangedFile[]> {
+    const results: ChangedFile[] = [];
+
     // Numstat for both staged and unstaged changes against HEAD
     const output = await this.run(["diff", "HEAD", "--numstat"]);
-    if (!output) return [];
 
-    const statusOutput = await this.run(["diff", "HEAD", "--name-status"]);
+    if (output) {
+      const statusOutput = await this.run(["diff", "HEAD", "--name-status"]);
 
-    const statusMap = new Map<string, string>();
-    for (const line of statusOutput.split("\n")) {
-      const [status, path] = line.split("\t");
-      if (status && path) {
-        statusMap.set(path, status);
+      const statusMap = new Map<string, string>();
+      for (const line of statusOutput.split("\n")) {
+        const [status, path] = line.split("\t");
+        if (status && path) {
+          statusMap.set(path, status);
+        }
+      }
+
+      for (const line of output.split("\n").filter(Boolean)) {
+        const [ins, del, path] = line.split("\t");
+        const status = statusMap.get(path!);
+        let operation: ChangedFile["operation"];
+        if (status === "A") {
+          operation = "created";
+        } else if (status === "D") {
+          operation = "removed";
+        } else {
+          operation = "changed";
+        }
+        results.push({
+          path: path!,
+          commitSha: "uncommitted",
+          insertions: Number(ins),
+          deletions: Number(del),
+          operation,
+        });
       }
     }
 
-    return output.split("\n").filter(Boolean).map((line) => {
-      const [ins, del, path] = line.split("\t");
-      const status = statusMap.get(path!);
-      let operation: ChangedFile["operation"];
-      if (status === "A") {
-        operation = "created";
-      } else if (status === "D") {
-        operation = "removed";
-      } else {
-        operation = "changed";
+    // Untracked files are invisible to `git diff HEAD` — pick them up separately
+    const untrackedOutput = await this.run(["ls-files", "--others", "--exclude-standard"]);
+    for (const filePath of untrackedOutput.split("\n").filter(Boolean)) {
+      const fullPath = this.cwd ? `${this.cwd}/${filePath}` : filePath;
+      const content = await Bun.file(fullPath).text();
+      let insertions = 0;
+      if (content) {
+        const lines = content.split("\n");
+        insertions = content.endsWith("\n") ? lines.length - 1 : lines.length;
       }
-      return {
-        path: path!,
+      results.push({
+        path: filePath,
         commitSha: "uncommitted",
-        insertions: Number(ins),
-        deletions: Number(del),
-        operation,
-      };
-    });
+        insertions,
+        deletions: 0,
+        operation: "created",
+      });
+    }
+
+    return results;
   }
 
   async getChangedFilesForCommit(commit: CommitInfo): Promise<ChangedFile[]> {

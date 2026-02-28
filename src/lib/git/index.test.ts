@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, rm, writeFile as bunWriteFile } from "fs/promises";
+import { mkdtemp, mkdir, rm, writeFile as bunWriteFile } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 import { Git } from "./index.ts";
@@ -326,6 +326,39 @@ describe("getUncommitedFiles", () => {
     expect(files).toEqual([
       { path: "doomed.txt", commitSha: "uncommitted", insertions: 0, deletions: 1, operation: "removed" },
     ]);
+  });
+
+  test("returns staged files inside a new directory", async () => {
+    await mkdir(join(dir, "src", "components"), { recursive: true });
+    await writeFile("src/components/foo.txt", "hello\n");
+    await writeFile("src/components/bar.txt", "world\n");
+    runGitCmd(dir, ["add", "src/"]);
+
+    const git = new Git(dir);
+    const files = await git.getUncommitedFiles();
+    const byPath = Object.fromEntries(files.map((f) => [f.path, f]));
+
+    expect(files).toHaveLength(2);
+    expect(byPath["src/components/foo.txt"]!.operation).toBe("created");
+    expect(byPath["src/components/foo.txt"]!.insertions).toBe(1);
+    expect(byPath["src/components/bar.txt"]!.operation).toBe("created");
+    expect(byPath["src/components/bar.txt"]!.insertions).toBe(1);
+  });
+
+  test("returns untracked files inside a new directory", async () => {
+    await mkdir(join(dir, "src", "components"), { recursive: true });
+    await writeFile("src/components/foo.txt", "hello\n");
+    await writeFile("src/components/bar.txt", "world\n");
+
+    const git = new Git(dir);
+    const files = await git.getUncommitedFiles();
+    const byPath = Object.fromEntries(files.map((f) => [f.path, f]));
+
+    expect(files).toHaveLength(2);
+    expect(byPath["src/components/foo.txt"]!.operation).toBe("created");
+    expect(byPath["src/components/foo.txt"]!.insertions).toBe(1);
+    expect(byPath["src/components/bar.txt"]!.operation).toBe("created");
+    expect(byPath["src/components/bar.txt"]!.insertions).toBe(1);
   });
 });
 
