@@ -345,6 +345,22 @@ describe("getUncommitedFiles", () => {
     expect(byPath["src/components/bar.txt"]!.insertions).toBe(1);
   });
 
+  test("skips untracked nested git repos", async () => {
+    await mkdir(join(dir, "nested"));
+    runGitCmd(join(dir, "nested"), ["init"]);
+    await bunWriteFile(join(dir, "nested", "file.txt"), "hello\n");
+
+    // Also create a regular untracked file to ensure those still work
+    await writeFile("regular.txt", "world\n");
+
+    const git = new Git(dir);
+    const files = await git.getUncommitedFiles();
+
+    expect(files).toHaveLength(1);
+    expect(files[0]!.path).toBe("regular.txt");
+    expect(files[0]!.operation).toBe("created");
+  });
+
   test("returns untracked files inside a new directory", async () => {
     await mkdir(join(dir, "src", "components"), { recursive: true });
     await writeFile("src/components/foo.txt", "hello\n");

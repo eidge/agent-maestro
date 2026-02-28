@@ -121,7 +121,7 @@ export class Git {
 
     // Untracked files are invisible to `git diff HEAD` — pick them up separately
     const untrackedOutput = await this.run(["ls-files", "--others", "--exclude-standard"]);
-    for (const filePath of untrackedOutput.split("\n").filter(Boolean)) {
+    for (const filePath of untrackedOutput.split("\n").filter(Boolean).filter((p) => !p.endsWith("/"))) {
       const fullPath = this.cwd ? `${this.cwd}/${filePath}` : filePath;
       const content = await Bun.file(fullPath).text();
       let insertions = 0;
