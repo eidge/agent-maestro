@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useMemo } from "react"
 import type { CommitInfo } from "../lib/git"
 
 export type SelectedCommit =
@@ -8,6 +8,7 @@ export type SelectedCommit =
 export interface CommitSelectorProps {
   commits: CommitInfo[]
   uncommitedFileCount: number
+  selectedCommit: SelectedCommit | null
   onSelect: (selection: SelectedCommit) => void
   focused?: boolean
 }
@@ -15,11 +16,10 @@ export interface CommitSelectorProps {
 export function CommitSelector({
   commits,
   uncommitedFileCount,
+  selectedCommit,
   onSelect,
   focused,
 }: CommitSelectorProps) {
-  const [selectedIndex, setSelectedIndex] = useState(0)
-
   const hasUncommitted = uncommitedFileCount > 0
 
   const selectOptions = useMemo(() => {
@@ -41,35 +41,25 @@ export function CommitSelector({
     return opts
   }, [hasUncommitted, uncommitedFileCount, commits])
 
-  // Resolve a SelectedCommit from an option index
-  const resolveSelection = useCallback(
-    (index: number): SelectedCommit | null => {
-      const option = selectOptions[index]
-      if (!option) return null
-      if (option.value === "uncommitted") return { kind: "uncommitted" }
-      const commit = commits.find((c) => c.sha === option.value)
-      return commit ? { kind: "commit", commit } : null
-    },
-    [selectOptions, commits],
-  )
-
-  // Auto-select first option when options become available
-  useEffect(() => {
-    if (selectOptions.length === 0) return
-    const selection = resolveSelection(0)
-    if (selection) {
-      setSelectedIndex(0)
-      onSelect(selection)
-    }
-  }, [selectOptions.length > 0]) // eslint-disable-line react-hooks/exhaustive-deps
+  const selectedIndex = useMemo(() => {
+    if (!selectedCommit) return 0
+    const value = selectedCommit.kind === "uncommitted" ? "uncommitted" : selectedCommit.commit.sha
+    const idx = selectOptions.findIndex(o => o.value === value)
+    return idx >= 0 ? idx : 0
+  }, [selectedCommit, selectOptions])
 
   const onChange = useCallback(
-    (index: number, _option: unknown) => {
-      setSelectedIndex(index)
-      const selection = resolveSelection(index)
-      if (selection) onSelect(selection)
+    (index: number) => {
+      const option = selectOptions[index]
+      if (!option) return
+      if (option.value === "uncommitted") {
+        onSelect({ kind: "uncommitted" })
+      } else {
+        const commit = commits.find(c => c.sha === option.value)
+        if (commit) onSelect({ kind: "commit", commit })
+      }
     },
-    [resolveSelection, onSelect],
+    [selectOptions, commits, onSelect],
   )
 
   if (selectOptions.length === 0) {

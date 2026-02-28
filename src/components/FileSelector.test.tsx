@@ -1,7 +1,7 @@
 import { describe, test, expect, afterEach, mock } from "bun:test"
 import { testRender } from "@opentui/react/test-utils"
-import { act, type ReactNode } from "react"
-import { FileSelector } from "./FileSelector"
+import { act, useState, type ReactNode } from "react"
+import { FileSelector, type FileSelectorProps } from "./FileSelector"
 import type { ChangedFile } from "../lib/git"
 
 // ---------------------------------------------------------------------------
@@ -51,6 +51,28 @@ function Wrapper({ children }: { children: ReactNode }) {
   )
 }
 
+/** Stateful wrapper for testing the controlled FileSelector with navigation. */
+function ControlledFileSelector({
+  initialSelection = null,
+  onSelectSpy,
+  ...props
+}: Omit<FileSelectorProps, "selectedFile" | "onSelect"> & {
+  initialSelection?: ChangedFile | null
+  onSelectSpy?: (f: ChangedFile) => void
+}) {
+  const [selected, setSelected] = useState<ChangedFile | null>(initialSelection)
+  return (
+    <FileSelector
+      {...props}
+      selectedFile={selected}
+      onSelect={(f) => {
+        setSelected(f)
+        onSelectSpy?.(f)
+      }}
+    />
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -63,11 +85,11 @@ describe("FileSelector", () => {
   })
 
   test("shows 'no changed files' when there are no files", async () => {
-    const onSelect = mock((_f: ChangedFile) => {})
+    const onSelect = mock<(f: ChangedFile) => void>(() => {})
 
     testSetup = await mount(
       <Wrapper>
-        <FileSelector files={[]} onSelect={onSelect} />
+        <FileSelector files={[]} selectedFile={null} onSelect={onSelect} />
       </Wrapper>,
     )
 
@@ -76,7 +98,7 @@ describe("FileSelector", () => {
   })
 
   test("shows file paths in the list", async () => {
-    const onSelect = mock((_f: ChangedFile) => {})
+    const onSelect = mock<(f: ChangedFile) => void>(() => {})
     const files = [
       makeFile("src/index.ts"),
       makeFile("README.md"),
@@ -84,7 +106,7 @@ describe("FileSelector", () => {
 
     testSetup = await mount(
       <Wrapper>
-        <FileSelector files={files} onSelect={onSelect} focused />
+        <FileSelector files={files} selectedFile={files[0]!} onSelect={onSelect} focused />
       </Wrapper>,
     )
 
@@ -94,12 +116,12 @@ describe("FileSelector", () => {
   })
 
   test("shows + prefix for created files", async () => {
-    const onSelect = mock((_f: ChangedFile) => {})
+    const onSelect = mock<(f: ChangedFile) => void>(() => {})
     const files = [makeFile("new-file.ts", "created")]
 
     testSetup = await mount(
       <Wrapper>
-        <FileSelector files={files} onSelect={onSelect} focused />
+        <FileSelector files={files} selectedFile={files[0]!} onSelect={onSelect} focused />
       </Wrapper>,
     )
 
@@ -107,12 +129,12 @@ describe("FileSelector", () => {
   })
 
   test("shows - prefix for removed files", async () => {
-    const onSelect = mock((_f: ChangedFile) => {})
+    const onSelect = mock<(f: ChangedFile) => void>(() => {})
     const files = [makeFile("old-file.ts", "removed")]
 
     testSetup = await mount(
       <Wrapper>
-        <FileSelector files={files} onSelect={onSelect} focused />
+        <FileSelector files={files} selectedFile={files[0]!} onSelect={onSelect} focused />
       </Wrapper>,
     )
 
@@ -120,12 +142,12 @@ describe("FileSelector", () => {
   })
 
   test("shows ~ prefix for changed files", async () => {
-    const onSelect = mock((_f: ChangedFile) => {})
+    const onSelect = mock<(f: ChangedFile) => void>(() => {})
     const files = [makeFile("modified.ts", "changed")]
 
     testSetup = await mount(
       <Wrapper>
-        <FileSelector files={files} onSelect={onSelect} focused />
+        <FileSelector files={files} selectedFile={files[0]!} onSelect={onSelect} focused />
       </Wrapper>,
     )
 
@@ -133,12 +155,12 @@ describe("FileSelector", () => {
   })
 
   test("shows insertions and deletions as description", async () => {
-    const onSelect = mock((_f: ChangedFile) => {})
+    const onSelect = mock<(f: ChangedFile) => void>(() => {})
     const files = [makeFile("file.ts", "changed", 10, 3)]
 
     testSetup = await mount(
       <Wrapper>
-        <FileSelector files={files} onSelect={onSelect} focused />
+        <FileSelector files={files} selectedFile={files[0]!} onSelect={onSelect} focused />
       </Wrapper>,
     )
 
@@ -147,8 +169,8 @@ describe("FileSelector", () => {
     expect(frame).toContain("-3")
   })
 
-  test("auto-selects first file on mount", async () => {
-    const onSelect = mock((_f: ChangedFile) => {})
+  test("does not call onSelect on mount (parent controls selection)", async () => {
+    const onSelect = mock<(f: ChangedFile) => void>(() => {})
     const files = [
       makeFile("first.ts"),
       makeFile("second.ts"),
@@ -156,17 +178,15 @@ describe("FileSelector", () => {
 
     testSetup = await mount(
       <Wrapper>
-        <FileSelector files={files} onSelect={onSelect} focused />
+        <FileSelector files={files} selectedFile={files[0]!} onSelect={onSelect} focused />
       </Wrapper>,
     )
 
-    expect(onSelect).toHaveBeenCalledTimes(1)
-    const selected: ChangedFile = onSelect.mock.calls[0]![0] as ChangedFile
-    expect(selected.path).toBe("first.ts")
+    expect(onSelect).not.toHaveBeenCalled()
   })
 
   test("calls onSelect with correct file when navigating down", async () => {
-    const onSelect = mock((_f: ChangedFile) => {})
+    const onSelectSpy = mock<(f: ChangedFile) => void>(() => {})
     const files = [
       makeFile("first.ts"),
       makeFile("second.ts"),
@@ -175,23 +195,27 @@ describe("FileSelector", () => {
 
     testSetup = await mount(
       <Wrapper>
-        <FileSelector files={files} onSelect={onSelect} focused />
+        <ControlledFileSelector
+          files={files}
+          initialSelection={files[0]!}
+          onSelectSpy={onSelectSpy}
+          focused
+        />
       </Wrapper>,
     )
 
-    // Auto-select fires first (first.ts)
-    expect(onSelect).toHaveBeenCalledTimes(1)
+    expect(onSelectSpy).not.toHaveBeenCalled()
 
     // Navigate down to second file
     await pressKeyAndRender(testSetup, "j")
 
-    expect(onSelect).toHaveBeenCalledTimes(2)
-    const selected: ChangedFile = onSelect.mock.calls[1]![0] as ChangedFile
+    expect(onSelectSpy).toHaveBeenCalledTimes(1)
+    const selected: ChangedFile = onSelectSpy.mock.calls[0]![0] as ChangedFile
     expect(selected.path).toBe("second.ts")
   })
 
   test("calls onSelect with third file when navigating down twice", async () => {
-    const onSelect = mock((_f: ChangedFile) => {})
+    const onSelectSpy = mock<(f: ChangedFile) => void>(() => {})
     const files = [
       makeFile("first.ts"),
       makeFile("second.ts"),
@@ -200,15 +224,20 @@ describe("FileSelector", () => {
 
     testSetup = await mount(
       <Wrapper>
-        <FileSelector files={files} onSelect={onSelect} focused />
+        <ControlledFileSelector
+          files={files}
+          initialSelection={files[0]!}
+          onSelectSpy={onSelectSpy}
+          focused
+        />
       </Wrapper>,
     )
 
     await pressKeyAndRender(testSetup, "j")
     await pressKeyAndRender(testSetup, "j")
 
-    expect(onSelect).toHaveBeenCalledTimes(3)
-    const selected: ChangedFile = onSelect.mock.calls[2]![0] as ChangedFile
+    expect(onSelectSpy).toHaveBeenCalledTimes(2)
+    const selected: ChangedFile = onSelectSpy.mock.calls[1]![0] as ChangedFile
     expect(selected.path).toBe("third.ts")
   })
 })

@@ -1,7 +1,7 @@
 import { describe, test, expect, afterEach, mock } from "bun:test"
 import { testRender } from "@opentui/react/test-utils"
-import { act, type ReactNode } from "react"
-import { CommitSelector, type SelectedCommit } from "./CommitSelector"
+import { act, useState, type ReactNode } from "react"
+import { CommitSelector, type CommitSelectorProps, type SelectedCommit } from "./CommitSelector"
 import type { CommitInfo } from "../lib/git"
 
 // ---------------------------------------------------------------------------
@@ -46,6 +46,28 @@ function Wrapper({ children }: { children: ReactNode }) {
   )
 }
 
+/** Stateful wrapper for testing the controlled CommitSelector with navigation. */
+function ControlledCommitSelector({
+  initialSelection = null,
+  onSelectSpy,
+  ...props
+}: Omit<CommitSelectorProps, "selectedCommit" | "onSelect"> & {
+  initialSelection?: SelectedCommit | null
+  onSelectSpy?: (s: SelectedCommit) => void
+}) {
+  const [selected, setSelected] = useState<SelectedCommit | null>(initialSelection)
+  return (
+    <CommitSelector
+      {...props}
+      selectedCommit={selected}
+      onSelect={(s) => {
+        setSelected(s)
+        onSelectSpy?.(s)
+      }}
+    />
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -58,13 +80,14 @@ describe("CommitSelector", () => {
   })
 
   test("shows 'no commits' when there are no commits and no uncommitted files", async () => {
-    const onSelect = mock((_s: SelectedCommit) => {})
+    const onSelect = mock<(s: SelectedCommit) => void>(() => {})
 
     testSetup = await mount(
       <Wrapper>
         <CommitSelector
           commits={[]}
           uncommitedFileCount={0}
+          selectedCommit={null}
           onSelect={onSelect}
         />
       </Wrapper>,
@@ -75,13 +98,14 @@ describe("CommitSelector", () => {
   })
 
   test("shows uncommitted changes option when uncommitedFileCount > 0", async () => {
-    const onSelect = mock((_s: SelectedCommit) => {})
+    const onSelect = mock<(s: SelectedCommit) => void>(() => {})
 
     testSetup = await mount(
       <Wrapper>
         <CommitSelector
           commits={[]}
           uncommitedFileCount={3}
+          selectedCommit={{ kind: "uncommitted" }}
           onSelect={onSelect}
           focused
         />
@@ -94,7 +118,7 @@ describe("CommitSelector", () => {
   })
 
   test("shows commit titles in the list", async () => {
-    const onSelect = mock((_s: SelectedCommit) => {})
+    const onSelect = mock<(s: SelectedCommit) => void>(() => {})
     const commits = [
       makeCommit("feat: add login", "abc123def456"),
       makeCommit("fix: typo in readme", "789012fed345"),
@@ -105,6 +129,7 @@ describe("CommitSelector", () => {
         <CommitSelector
           commits={commits}
           uncommitedFileCount={0}
+          selectedCommit={{ kind: "commit", commit: commits[0]! }}
           onSelect={onSelect}
           focused
         />
@@ -117,7 +142,7 @@ describe("CommitSelector", () => {
   })
 
   test("shows commit short sha as description", async () => {
-    const onSelect = mock((_s: SelectedCommit) => {})
+    const onSelect = mock<(s: SelectedCommit) => void>(() => {})
     const commits = [makeCommit("some change", "abcdef123456")]
 
     testSetup = await mount(
@@ -125,6 +150,7 @@ describe("CommitSelector", () => {
         <CommitSelector
           commits={commits}
           uncommitedFileCount={0}
+          selectedCommit={{ kind: "commit", commit: commits[0]! }}
           onSelect={onSelect}
           focused
         />
@@ -134,53 +160,26 @@ describe("CommitSelector", () => {
     expect(testSetup.captureCharFrame()).toContain("#abcdef")
   })
 
-  test("auto-selects uncommitted changes on mount when present", async () => {
-    const onSelect = mock((_s: SelectedCommit) => {})
+  test("does not call onSelect on mount (parent controls selection)", async () => {
+    const onSelect = mock<(s: SelectedCommit) => void>(() => {})
 
     testSetup = await mount(
       <Wrapper>
         <CommitSelector
           commits={[makeCommit("a commit", "aaa111bbb222")]}
           uncommitedFileCount={2}
+          selectedCommit={{ kind: "uncommitted" }}
           onSelect={onSelect}
           focused
         />
       </Wrapper>,
     )
 
-    expect(onSelect).toHaveBeenCalledTimes(1)
-    const selection: SelectedCommit = onSelect.mock.calls[0]![0] as SelectedCommit
-    expect(selection.kind).toBe("uncommitted")
-  })
-
-  test("auto-selects first commit on mount when no uncommitted files", async () => {
-    const onSelect = mock((_s: SelectedCommit) => {})
-    const commits = [
-      makeCommit("first commit", "aaa111bbb222"),
-      makeCommit("second commit", "ccc333ddd444"),
-    ]
-
-    testSetup = await mount(
-      <Wrapper>
-        <CommitSelector
-          commits={commits}
-          uncommitedFileCount={0}
-          onSelect={onSelect}
-          focused
-        />
-      </Wrapper>,
-    )
-
-    expect(onSelect).toHaveBeenCalledTimes(1)
-    const selection: SelectedCommit = onSelect.mock.calls[0]![0] as SelectedCommit
-    expect(selection.kind).toBe("commit")
-    if (selection.kind === "commit") {
-      expect(selection.commit.sha).toBe("aaa111bbb222")
-    }
+    expect(onSelect).not.toHaveBeenCalled()
   })
 
   test("calls onSelect with correct commit when navigating down", async () => {
-    const onSelect = mock((_s: SelectedCommit) => {})
+    const onSelectSpy = mock<(s: SelectedCommit) => void>(() => {})
     const commits = [
       makeCommit("first commit", "aaa111bbb222"),
       makeCommit("second commit", "ccc333ddd444"),
@@ -188,23 +187,23 @@ describe("CommitSelector", () => {
 
     testSetup = await mount(
       <Wrapper>
-        <CommitSelector
+        <ControlledCommitSelector
           commits={commits}
           uncommitedFileCount={2}
-          onSelect={onSelect}
+          initialSelection={{ kind: "uncommitted" }}
+          onSelectSpy={onSelectSpy}
           focused
         />
       </Wrapper>,
     )
 
-    // Auto-select fires first (uncommitted)
-    expect(onSelect).toHaveBeenCalledTimes(1)
+    expect(onSelectSpy).not.toHaveBeenCalled()
 
     // Navigate down to first commit
     await pressKeyAndRender(testSetup, "j")
 
-    expect(onSelect).toHaveBeenCalledTimes(2)
-    const selection: SelectedCommit = onSelect.mock.calls[1]![0] as SelectedCommit
+    expect(onSelectSpy).toHaveBeenCalledTimes(1)
+    const selection: SelectedCommit = onSelectSpy.mock.calls[0]![0] as SelectedCommit
     expect(selection.kind).toBe("commit")
     if (selection.kind === "commit") {
       expect(selection.commit.sha).toBe("aaa111bbb222")
@@ -212,7 +211,7 @@ describe("CommitSelector", () => {
   })
 
   test("calls onSelect with second commit when navigating down twice", async () => {
-    const onSelect = mock((_s: SelectedCommit) => {})
+    const onSelectSpy = mock<(s: SelectedCommit) => void>(() => {})
     const commits = [
       makeCommit("first commit", "aaa111bbb222"),
       makeCommit("second commit", "ccc333ddd444"),
@@ -220,10 +219,11 @@ describe("CommitSelector", () => {
 
     testSetup = await mount(
       <Wrapper>
-        <CommitSelector
+        <ControlledCommitSelector
           commits={commits}
           uncommitedFileCount={2}
-          onSelect={onSelect}
+          initialSelection={{ kind: "uncommitted" }}
+          onSelectSpy={onSelectSpy}
           focused
         />
       </Wrapper>,
@@ -232,8 +232,8 @@ describe("CommitSelector", () => {
     await pressKeyAndRender(testSetup, "j")
     await pressKeyAndRender(testSetup, "j")
 
-    expect(onSelect).toHaveBeenCalledTimes(3)
-    const selection: SelectedCommit = onSelect.mock.calls[2]![0] as SelectedCommit
+    expect(onSelectSpy).toHaveBeenCalledTimes(2)
+    const selection: SelectedCommit = onSelectSpy.mock.calls[1]![0] as SelectedCommit
     expect(selection.kind).toBe("commit")
     if (selection.kind === "commit") {
       expect(selection.commit.sha).toBe("ccc333ddd444")
@@ -241,27 +241,25 @@ describe("CommitSelector", () => {
   })
 
   test("uncommitted option appears before commits in navigation order", async () => {
-    const onSelect = mock((_s: SelectedCommit) => {})
+    const onSelectSpy = mock<(s: SelectedCommit) => void>(() => {})
     const commits = [makeCommit("a commit", "aaa111bbb222")]
 
     testSetup = await mount(
       <Wrapper>
-        <CommitSelector
+        <ControlledCommitSelector
           commits={commits}
           uncommitedFileCount={1}
-          onSelect={onSelect}
+          initialSelection={{ kind: "uncommitted" }}
+          onSelectSpy={onSelectSpy}
           focused
         />
       </Wrapper>,
     )
 
-    // First call is auto-select of uncommitted
-    const first: SelectedCommit = onSelect.mock.calls[0]![0] as SelectedCommit
-    expect(first.kind).toBe("uncommitted")
-
     // Down arrow goes to the commit
     await pressKeyAndRender(testSetup, "j")
-    const second: SelectedCommit = onSelect.mock.calls[1]![0] as SelectedCommit
-    expect(second.kind).toBe("commit")
+    expect(onSelectSpy).toHaveBeenCalledTimes(1)
+    const selection: SelectedCommit = onSelectSpy.mock.calls[0]![0] as SelectedCommit
+    expect(selection.kind).toBe("commit")
   })
 })

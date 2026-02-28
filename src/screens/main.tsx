@@ -27,7 +27,7 @@ export function MainScreen() {
   const [uncommitedFiles, setUncommitedFiles] = useState<ChangedFile[]>([])
 
   const [selectedCommit, setSelectedCommit] = useState<SelectedCommit | null>(null)
-  const [currentFiles, setCurrentFiles] = useState<ChangedFile[]>([])
+  const [commitChangedFiles, setCommitChangedFiles] = useState<ChangedFile[]>([])
   const [fileDiffs, setFileDiffs] = useState<FileDiff[]>([])
   const [selectedFile, setSelectedFile] = useState<ChangedFile | null>(null)
   const [focusedPanel, setFocusedPanel] = useState<FocusablePanel>("commits")
@@ -59,26 +59,56 @@ export function MainScreen() {
     return () => clearInterval(interval)
   }, [git])
 
-  // Fetch changed files for the selected commit
-  useEffect(() => {
-    if (!selectedCommit) {
-      setCurrentFiles([])
-      return
-    }
-    if (selectedCommit.kind === "uncommitted") {
-      setCurrentFiles(uncommitedFiles)
+  // Auto-select first commit/uncommitted when options become available
+  const hasCommitOptions = uncommitedFiles.length > 0 || commits.length > 0
+  const [prevHasCommitOptions, setPrevHasCommitOptions] = useState(false)
+  if (hasCommitOptions !== prevHasCommitOptions) {
+    setPrevHasCommitOptions(hasCommitOptions)
+    if (hasCommitOptions) {
+      setSelectedCommit(
+        uncommitedFiles.length > 0
+          ? { kind: "uncommitted" }
+          : { kind: "commit", commit: commits[0]! }
+      )
     } else {
-      git.getChangedFilesForCommit(selectedCommit.commit).then(setCurrentFiles)
+      setSelectedCommit(null)
     }
-  }, [git, selectedCommit, uncommitedFiles])
+  }
 
-  // Fetch diffs for current files
+  // Reset async commit files when selected commit changes (render-time adjustment)
+  const commitSha = selectedCommit?.kind === "commit" ? selectedCommit.commit.sha : null
+  const [prevCommitSha, setPrevCommitSha] = useState<string | null>(null)
+  if (commitSha !== prevCommitSha) {
+    setPrevCommitSha(commitSha)
+    setCommitChangedFiles([])
+  }
+
+  // Derive currentFiles: synchronous for null/uncommitted, async result for commits
+  const currentFiles = useMemo(() => {
+    if (!selectedCommit) return []
+    if (selectedCommit.kind === "uncommitted") return uncommitedFiles
+    return commitChangedFiles
+  }, [selectedCommit, uncommitedFiles, commitChangedFiles])
+
+  // Reset file diffs and auto-select first file when current files change
+  const currentFilesKey = currentFiles.map(f => f.path).join("\0")
+  const [prevFilesKey, setPrevFilesKey] = useState("")
+  if (currentFilesKey !== prevFilesKey) {
+    setPrevFilesKey(currentFilesKey)
+    setFileDiffs([])
+    setSelectedFile(currentFiles[0] ?? null)
+  }
+
+  // Fetch changed files for commit selections (async)
   useEffect(() => {
-    if (currentFiles.length === 0) {
-      setFileDiffs([])
-      return
-    }
-    (async () => {
+    if (!selectedCommit || selectedCommit.kind !== "commit") return
+    git.getChangedFilesForCommit(selectedCommit.commit).then(setCommitChangedFiles)
+  }, [git, selectedCommit])
+
+  // Fetch diffs for current files (async)
+  useEffect(() => {
+    if (currentFiles.length === 0) return
+    ;(async () => {
       const diffs = await Promise.all(currentFiles.map(f => git.getFileDiff(f)))
       setFileDiffs(diffs)
     })()
@@ -120,11 +150,12 @@ export function MainScreen() {
           {/* Commits select */}
           <Panel
             title="Commits"
-            maxHeight={20}
+            height={20}
           >
             <CommitSelector
               commits={commits}
               uncommitedFileCount={uncommitedFiles.length}
+              selectedCommit={selectedCommit}
               onSelect={setSelectedCommit}
               focused={focusedPanel === "commits"}
             />
@@ -138,6 +169,7 @@ export function MainScreen() {
           >
             <FileSelector
               files={currentFiles}
+              selectedFile={selectedFile}
               onSelect={setSelectedFile}
               focused={focusedPanel === "files"}
             />
