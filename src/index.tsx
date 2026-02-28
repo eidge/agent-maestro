@@ -4,6 +4,7 @@ import { App } from "./app";
 
 const renderer = await createCliRenderer({
   exitOnCtrlC: true,
+  targetFps: 60,
   consoleOptions: {
     sizePercent: 30,
   }
