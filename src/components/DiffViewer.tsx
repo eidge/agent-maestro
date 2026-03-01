@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { pathToFiletype, type ScrollBoxRenderable } from "@opentui/core";
 import { resolveFiletype } from "../lib/syntax/parsers";
 import { syntaxStyle } from "../lib/syntax/style";
@@ -13,6 +13,7 @@ export interface DiffViewerProps {
 
 export function DiffViewer({ diff, focused }: DiffViewerProps) {
   const scrollRef = useRef<ScrollBoxRenderable>(null);
+  const previousPathRef = useRef<string>(diff.path);
 
   useKeyboardShortcut("g g", "scroll to top", () => {
     if (!focused) return;
@@ -24,6 +25,14 @@ export function DiffViewer({ diff, focused }: DiffViewerProps) {
     const sb = scrollRef.current;
     if (sb) sb.scrollTo(sb.scrollHeight);
   });
+
+  useEffect(() => {
+    if (diff.path === previousPathRef.current) return
+    previousPathRef.current = diff.path
+    const sb = scrollRef.current;
+
+    if (sb) sb.scrollTo(0);
+  }, [diff])
 
   return (
     <scrollbox

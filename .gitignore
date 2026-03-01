@@ -8,6 +8,7 @@ node_modules
 out
 dist
 *.tgz
+agent-maestro
 
 # code coverage
 coverage

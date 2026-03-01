@@ -4,6 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "build": "bun build --compile src/index.tsx --outfile agent-maestro",
     "dev": "bun run --watch src/index.tsx",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
