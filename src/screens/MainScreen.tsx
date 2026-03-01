@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { pathToFiletype } from "@opentui/core";
+import { resolveFiletype } from "../lib/tree-sitter-parsers";
 import { Panel } from "../components/ui/Panel";
 import { CommitSelector } from "../components/CommitSelector";
 import { FileSelector } from "../components/FileSelector";
@@ -93,7 +94,7 @@ export function MainScreen() {
             <scrollbox focused={focusedPanel === "diff"}>
               <box flexDirection="column">
                 <diff
-                  filetype={pathToFiletype(selectedDiff.path)}
+                  filetype={resolveFiletype(pathToFiletype(selectedDiff.path))}
                   showLineNumbers={true}
                   diff={selectedDiff.unifiedDiff}
                 />

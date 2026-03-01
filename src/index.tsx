@@ -1,6 +1,9 @@
-import { createCliRenderer } from "@opentui/core";
+import { addDefaultParsers, createCliRenderer } from "@opentui/core";
 import { createRoot } from "@opentui/react";
 import { App } from "./app";
+import { additionalParsers } from "./lib/tree-sitter-parsers";
+
+addDefaultParsers(additionalParsers);
 
 const renderer = await createCliRenderer({
   exitOnCtrlC: true,
