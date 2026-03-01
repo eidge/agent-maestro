@@ -1,5 +1,6 @@
 {
   "name": "agent-maestro",
+  "version": "0.1.0",
   "module": "src/index.tsx",
   "type": "module",
   "private": true,
@@ -9,7 +10,8 @@
     "dev": "bun run --watch src/index.tsx",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "bun tsc && eslint src/ && prettier --check ."
+    "lint": "bun tsc && eslint src/ && prettier --check .",
+    "publish": "bun run scripts/publish.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
