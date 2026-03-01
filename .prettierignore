@@ -4,3 +4,4 @@ out
 bun.lock
 coverage
 *.tsbuildinfo
+.agents/skills
