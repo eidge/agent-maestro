@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from "react";
 import type { CommitInfo } from "../lib/git";
+import { theme } from "../lib/styles/default";
 
 export type SelectedCommit = { kind: "uncommitted" } | { kind: "commit"; commit: CommitInfo };
 
@@ -61,7 +62,7 @@ export function CommitSelector({
   );
 
   if (selectOptions.length === 0) {
-    return <text fg="#565f89">no commits</text>;
+    return <text fg={theme.textMuted}>no commits</text>;
   }
 
   return (

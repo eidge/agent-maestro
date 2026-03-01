@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from "react";
 import type { ChangedFile } from "../lib/git";
+import { theme } from "../lib/styles/default";
 
 export interface FileSelectorProps {
   files: ChangedFile[];
@@ -34,7 +35,7 @@ export function FileSelector({ files, selectedFile, onSelect, focused }: FileSel
   );
 
   if (selectOptions.length === 0) {
-    return <text fg="#565f89">no changed files</text>;
+    return <text fg={theme.textMuted}>no changed files</text>;
   }
 
   return (

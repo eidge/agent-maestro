@@ -1,9 +1,7 @@
 import { SyntaxStyle, type ThemeTokenStyle } from "@opentui/core";
+import { theme } from "../styles/default";
 
-/**
- * Tokyo Night–inspired syntax theme for tree-sitter highlight scopes.
- */
-const tokyoNight: ThemeTokenStyle[] = [
+const syntaxTheme: ThemeTokenStyle[] = [
   // ── Keywords & control flow ──────────────────────────────────────
   {
     scope: [
@@ -15,17 +13,17 @@ const tokyoNight: ThemeTokenStyle[] = [
       "keyword.repeat",
       "keyword.exception",
     ],
-    style: { foreground: "#9d7cd8" },
+    style: { foreground: theme.syntax.keyword },
   },
   {
     scope: ["keyword.operator"],
-    style: { foreground: "#89ddff" },
+    style: { foreground: theme.syntax.operator },
   },
 
   // ── Types ────────────────────────────────────────────────────────
   {
     scope: ["type", "type.builtin", "type.definition"],
-    style: { foreground: "#2ac3de" },
+    style: { foreground: theme.syntax.type },
   },
 
   // ── Functions & methods ──────────────────────────────────────────
@@ -39,108 +37,108 @@ const tokyoNight: ThemeTokenStyle[] = [
       "method",
       "method.call",
     ],
-    style: { foreground: "#7aa2f7" },
+    style: { foreground: theme.syntax.function },
   },
 
   // ── Variables & properties ───────────────────────────────────────
   {
     scope: ["variable"],
-    style: { foreground: "#c0caf5" },
+    style: { foreground: theme.syntax.variable },
   },
   {
     scope: ["variable.builtin"],
-    style: { foreground: "#f7768e" },
+    style: { foreground: theme.syntax.variableBuiltin },
   },
   {
     scope: ["variable.parameter"],
-    style: { foreground: "#e0af68" },
+    style: { foreground: theme.syntax.parameter },
   },
   {
     scope: ["variable.member", "property", "property.definition", "field"],
-    style: { foreground: "#73daca" },
+    style: { foreground: theme.syntax.property },
   },
 
   // ── Strings ──────────────────────────────────────────────────────
   {
     scope: ["string", "string.special"],
-    style: { foreground: "#9ece6a" },
+    style: { foreground: theme.syntax.string },
   },
   {
     scope: ["string.escape"],
-    style: { foreground: "#89ddff" },
+    style: { foreground: theme.syntax.escape },
   },
   {
     scope: ["string.regex"],
-    style: { foreground: "#e0af68" },
+    style: { foreground: theme.syntax.regex },
   },
 
   // ── Numbers & booleans ───────────────────────────────────────────
   {
     scope: ["number", "number.float", "boolean", "float"],
-    style: { foreground: "#ff9e64" },
+    style: { foreground: theme.syntax.number },
   },
 
   // ── Constants ────────────────────────────────────────────────────
   {
     scope: ["constant", "constant.builtin"],
-    style: { foreground: "#ff9e64" },
+    style: { foreground: theme.syntax.constant },
   },
 
   // ── Comments ─────────────────────────────────────────────────────
   {
     scope: ["comment"],
-    style: { foreground: "#565f89", italic: true },
+    style: { foreground: theme.syntax.comment, italic: true },
   },
 
   // ── Operators & punctuation ──────────────────────────────────────
   {
     scope: ["operator"],
-    style: { foreground: "#89ddff" },
+    style: { foreground: theme.syntax.operator },
   },
   {
     scope: ["punctuation", "punctuation.bracket", "punctuation.delimiter"],
-    style: { foreground: "#a9b1d6" },
+    style: { foreground: theme.syntax.punctuation },
   },
   {
     scope: ["punctuation.special"],
-    style: { foreground: "#89ddff" },
+    style: { foreground: theme.syntax.operator },
   },
 
   // ── Tags (JSX / HTML) ───────────────────────────────────────────
   {
     scope: ["tag"],
-    style: { foreground: "#f7768e" },
+    style: { foreground: theme.syntax.tag },
   },
   {
     scope: ["tag.attribute"],
-    style: { foreground: "#7aa2f7" },
+    style: { foreground: theme.syntax.tagAttribute },
   },
   {
     scope: ["tag.delimiter"],
-    style: { foreground: "#565f89" },
+    style: { foreground: theme.syntax.tagDelimiter },
   },
 
   // ── Modules & namespaces ─────────────────────────────────────────
   {
     scope: ["module", "namespace"],
-    style: { foreground: "#2ac3de" },
+    style: { foreground: theme.syntax.module },
   },
 
   // ── Labels & special ─────────────────────────────────────────────
   {
     scope: ["label", "constructor"],
-    style: { foreground: "#2ac3de" },
+    style: { foreground: theme.syntax.label },
   },
   {
     scope: ["attribute"],
-    style: { foreground: "#e0af68" },
+    style: { foreground: theme.syntax.attribute },
   },
 
   // ── Embedded / injection ─────────────────────────────────────────
   {
     scope: ["embedded"],
-    style: { foreground: "#c0caf5" },
+    style: { foreground: theme.syntax.embedded },
   },
 ];
 
-export const syntaxStyle = SyntaxStyle.fromTheme(tokyoNight);
+export const syntaxStyle = SyntaxStyle.fromTheme(syntaxTheme);

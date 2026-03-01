@@ -7,6 +7,7 @@ import { CommitSelector } from "../components/CommitSelector";
 import { FileSelector } from "../components/FileSelector";
 import { useKeyboardShortcut } from "../hooks/keyboard";
 import { useGitData } from "../hooks/git-data";
+import { theme } from "../lib/styles/default";
 
 const focusablePanels = ["commits", "files", "diff"] as const;
 
@@ -54,7 +55,7 @@ export function MainScreen() {
         <ascii-font font="tiny" text="Agent-Maestro" />
         <box marginLeft={1} paddingY={0}>
           <text>
-            <span fg="#7aa2f7">
+            <span fg={theme.accent}>
               <strong>{branchName ?? "..."}</strong>
             </span>
           </text>
@@ -105,7 +106,7 @@ export function MainScreen() {
           </Panel>
         ) : (
           <box flexGrow={1} justifyContent="center" alignItems="center">
-            <text fg="#565f89">No diffs to display</text>
+            <text fg={theme.textMuted}>No diffs to display</text>
           </box>
         )}
       </box>
