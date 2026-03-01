@@ -1,3 +1,7 @@
+# Formatting
+
+Use `bun format` to format code instead of reformatting manually. Prettier is configured for the project and should be the single source of truth for code style.
+
 # Verification
 
 After making changes, always run:

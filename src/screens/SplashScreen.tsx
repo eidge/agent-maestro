@@ -2,11 +2,11 @@ import { TextAttributes } from "@opentui/core";
 import { useKeyboardShortcut } from "../hooks/keyboard";
 
 interface SplashScreenProps {
-  onDismiss: () => void
+  onDismiss: () => void;
 }
 
 export function SplashScreen(props: SplashScreenProps) {
-  useKeyboardShortcut('return', 'quit', props.onDismiss)
+  useKeyboardShortcut("return", "quit", props.onDismiss);
 
   return (
     <box alignItems="center" justifyContent="center" flexGrow={1}>
@@ -18,5 +18,5 @@ export function SplashScreen(props: SplashScreenProps) {
         <text>Press enter to start</text>
       </box>
     </box>
-  )
+  );
 }

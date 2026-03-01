@@ -1,16 +1,14 @@
-import { useCallback, useMemo } from "react"
-import type { CommitInfo } from "../lib/git"
+import { useCallback, useMemo } from "react";
+import type { CommitInfo } from "../lib/git";
 
-export type SelectedCommit =
-  | { kind: "uncommitted" }
-  | { kind: "commit"; commit: CommitInfo }
+export type SelectedCommit = { kind: "uncommitted" } | { kind: "commit"; commit: CommitInfo };
 
 export interface CommitSelectorProps {
-  commits: CommitInfo[]
-  uncommitedFileCount: number
-  selectedCommit: SelectedCommit | null
-  onSelect: (selection: SelectedCommit) => void
-  focused?: boolean
+  commits: CommitInfo[];
+  uncommitedFileCount: number;
+  selectedCommit: SelectedCommit | null;
+  onSelect: (selection: SelectedCommit) => void;
+  focused?: boolean;
 }
 
 export function CommitSelector({
@@ -20,50 +18,50 @@ export function CommitSelector({
   onSelect,
   focused,
 }: CommitSelectorProps) {
-  const hasUncommitted = uncommitedFileCount > 0
+  const hasUncommitted = uncommitedFileCount > 0;
 
   const selectOptions = useMemo(() => {
-    const opts: { name: string; description: string; value: string }[] = []
+    const opts: { name: string; description: string; value: string }[] = [];
     if (hasUncommitted) {
       opts.push({
         name: "● uncommitted changes",
         description: `${uncommitedFileCount} files`,
         value: "uncommitted",
-      })
+      });
     }
     for (const c of commits) {
       opts.push({
         name: c.title,
         description: `#${c.sha.slice(0, 6)}`,
         value: c.sha,
-      })
+      });
     }
-    return opts
-  }, [hasUncommitted, uncommitedFileCount, commits])
+    return opts;
+  }, [hasUncommitted, uncommitedFileCount, commits]);
 
   const selectedIndex = useMemo(() => {
-    if (!selectedCommit) return 0
-    const value = selectedCommit.kind === "uncommitted" ? "uncommitted" : selectedCommit.commit.sha
-    const idx = selectOptions.findIndex(o => o.value === value)
-    return idx >= 0 ? idx : 0
-  }, [selectedCommit, selectOptions])
+    if (!selectedCommit) return 0;
+    const value = selectedCommit.kind === "uncommitted" ? "uncommitted" : selectedCommit.commit.sha;
+    const idx = selectOptions.findIndex((o) => o.value === value);
+    return idx >= 0 ? idx : 0;
+  }, [selectedCommit, selectOptions]);
 
   const onChange = useCallback(
     (index: number) => {
-      const option = selectOptions[index]
-      if (!option) return
+      const option = selectOptions[index];
+      if (!option) return;
       if (option.value === "uncommitted") {
-        onSelect({ kind: "uncommitted" })
+        onSelect({ kind: "uncommitted" });
       } else {
-        const commit = commits.find(c => c.sha === option.value)
-        if (commit) onSelect({ kind: "commit", commit })
+        const commit = commits.find((c) => c.sha === option.value);
+        if (commit) onSelect({ kind: "commit", commit });
       }
     },
     [selectOptions, commits, onSelect],
-  )
+  );
 
   if (selectOptions.length === 0) {
-    return <text fg="#565f89">no commits</text>
+    return <text fg="#565f89">no commits</text>;
   }
 
   return (
@@ -75,5 +73,5 @@ export function CommitSelector({
       showScrollIndicator
       height="100%"
     />
-  )
+  );
 }

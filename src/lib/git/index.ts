@@ -1,20 +1,20 @@
 export interface CommitInfo {
-  title: string,
-  body: string | null,
-  sha: string,
+  title: string;
+  body: string | null;
+  sha: string;
 }
 
 export interface ChangedFile {
-  path: string,
-  commitSha: string,
-  insertions: number,
-  deletions: number,
-  operation: "created" | "removed" | "changed"
+  path: string;
+  commitSha: string;
+  insertions: number;
+  deletions: number;
+  operation: "created" | "removed" | "changed";
 }
 
 export interface FileDiff {
-  path: string,
-  unifiedDiff: string,
+  path: string;
+  unifiedDiff: string;
 }
 
 export class Git {
@@ -27,13 +27,13 @@ export class Git {
   }
 
   async getBaseBranchName(): Promise<string> {
-    if (this.baseBranchName) return this.baseBranchName
+    if (this.baseBranchName) return this.baseBranchName;
 
     // Try to resolve via the remote's cached default branch
     try {
       const ref = await this.run(["symbolic-ref", "refs/remotes/origin/HEAD"]);
       this.baseBranchName = ref.replace("refs/remotes/origin/", "");
-      return this.baseBranchName
+      return this.baseBranchName;
     } catch {
       // origin/HEAD not set — fall back to checking known default branches
     }
@@ -42,7 +42,7 @@ export class Git {
       try {
         await this.run(["rev-parse", "--verify", candidate]);
         this.baseBranchName = candidate;
-        return this.baseBranchName
+        return this.baseBranchName;
       } catch {
         // branch doesn't exist, try next
       }
@@ -121,7 +121,10 @@ export class Git {
 
     // Untracked files are invisible to `git diff HEAD` — pick them up separately
     const untrackedOutput = await this.run(["ls-files", "--others", "--exclude-standard"]);
-    for (const filePath of untrackedOutput.split("\n").filter(Boolean).filter((p) => !p.endsWith("/"))) {
+    for (const filePath of untrackedOutput
+      .split("\n")
+      .filter(Boolean)
+      .filter((p) => !p.endsWith("/"))) {
       const fullPath = this.cwd ? `${this.cwd}/${filePath}` : filePath;
       const content = await Bun.file(fullPath).text();
       let insertions = 0;
@@ -142,13 +145,7 @@ export class Git {
   }
 
   async getChangedFilesForCommit(commit: CommitInfo): Promise<ChangedFile[]> {
-    const output = await this.run([
-      "diff-tree",
-      "--no-commit-id",
-      "--numstat",
-      "-r",
-      commit.sha,
-    ]);
+    const output = await this.run(["diff-tree", "--no-commit-id", "--numstat", "-r", commit.sha]);
 
     if (!output) return [];
 
@@ -169,31 +166,41 @@ export class Git {
       }
     }
 
-    return output.split("\n").filter(Boolean).map((line) => {
-      const [ins, del, path] = line.split("\t");
-      const status = statusMap.get(path!);
-      let operation: ChangedFile["operation"];
-      if (status === "A") {
-        operation = "created";
-      } else if (status === "D") {
-        operation = "removed";
-      } else {
-        operation = "changed";
-      }
-      return {
-        path: path!,
-        commitSha: commit.sha,
-        insertions: Number(ins),
-        deletions: Number(del),
-        operation,
-      };
-    });
+    return output
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => {
+        const [ins, del, path] = line.split("\t");
+        const status = statusMap.get(path!);
+        let operation: ChangedFile["operation"];
+        if (status === "A") {
+          operation = "created";
+        } else if (status === "D") {
+          operation = "removed";
+        } else {
+          operation = "changed";
+        }
+        return {
+          path: path!,
+          commitSha: commit.sha,
+          insertions: Number(ins),
+          deletions: Number(del),
+          operation,
+        };
+      });
   }
 
   async getFileDiff(file: ChangedFile): Promise<FileDiff> {
     let unifiedDiff: string;
     if (file.commitSha !== "uncommitted") {
-      unifiedDiff = await this.run(["diff-tree", "-p", "-U999999", file.commitSha, "--", file.path]);
+      unifiedDiff = await this.run([
+        "diff-tree",
+        "-p",
+        "-U999999",
+        file.commitSha,
+        "--",
+        file.path,
+      ]);
     } else {
       unifiedDiff = await this.run(["diff", "HEAD", "-U999999", "--", file.path]);
       if (!unifiedDiff) {

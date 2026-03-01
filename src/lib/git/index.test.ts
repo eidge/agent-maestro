@@ -17,7 +17,6 @@ function runGitCmd(cwd: string, args: string[]) {
   }
 }
 
-
 beforeEach(async () => {
   dir = await mkdtemp(join(tmpdir(), "git-test-"));
   runGitCmd(dir, ["init", "-b", "main"]);
@@ -76,9 +75,7 @@ describe("getBaseBranchName", () => {
   test("throws when neither main nor master exists and no remote", async () => {
     runGitCmd(dir, ["branch", "-m", "main", "something-else"]);
     const git = new Git(dir);
-    expect(git.getBaseBranchName()).rejects.toThrow(
-      "Could not determine base branch",
-    );
+    expect(git.getBaseBranchName()).rejects.toThrow("Could not determine base branch");
   });
 });
 
@@ -182,7 +179,13 @@ describe("getChangedFilesForCommit", () => {
     const files = await git.getChangedFilesForCommit(commits[0]!);
 
     expect(files).toEqual([
-      { path: "hello.txt", commitSha: commits[0]!.sha, insertions: 1, deletions: 0, operation: "created" },
+      {
+        path: "hello.txt",
+        commitSha: commits[0]!.sha,
+        insertions: 1,
+        deletions: 0,
+        operation: "created",
+      },
     ]);
   });
 
@@ -199,7 +202,13 @@ describe("getChangedFilesForCommit", () => {
     const files = await git.getChangedFilesForCommit(commits[0]!);
 
     expect(files).toEqual([
-      { path: "remove-me.txt", commitSha: commits[0]!.sha, insertions: 0, deletions: 1, operation: "removed" },
+      {
+        path: "remove-me.txt",
+        commitSha: commits[0]!.sha,
+        insertions: 0,
+        deletions: 1,
+        operation: "removed",
+      },
     ]);
   });
 
@@ -216,7 +225,13 @@ describe("getChangedFilesForCommit", () => {
     const files = await git.getChangedFilesForCommit(commits[0]!);
 
     expect(files).toEqual([
-      { path: "edit-me.txt", commitSha: commits[0]!.sha, insertions: 2, deletions: 0, operation: "changed" },
+      {
+        path: "edit-me.txt",
+        commitSha: commits[0]!.sha,
+        insertions: 2,
+        deletions: 0,
+        operation: "changed",
+      },
     ]);
   });
 
@@ -271,7 +286,13 @@ describe("getUncommitedFiles", () => {
     const files = await git.getUncommitedFiles();
 
     expect(files).toEqual([
-      { path: "staged.txt", commitSha: "uncommitted", insertions: 1, deletions: 0, operation: "created" },
+      {
+        path: "staged.txt",
+        commitSha: "uncommitted",
+        insertions: 1,
+        deletions: 0,
+        operation: "created",
+      },
     ]);
   });
 
@@ -286,7 +307,13 @@ describe("getUncommitedFiles", () => {
     const files = await git.getUncommitedFiles();
 
     expect(files).toEqual([
-      { path: "tracked.txt", commitSha: "uncommitted", insertions: 1, deletions: 0, operation: "changed" },
+      {
+        path: "tracked.txt",
+        commitSha: "uncommitted",
+        insertions: 1,
+        deletions: 0,
+        operation: "changed",
+      },
     ]);
   });
 
@@ -324,7 +351,13 @@ describe("getUncommitedFiles", () => {
     const files = await git.getUncommitedFiles();
 
     expect(files).toEqual([
-      { path: "doomed.txt", commitSha: "uncommitted", insertions: 0, deletions: 1, operation: "removed" },
+      {
+        path: "doomed.txt",
+        commitSha: "uncommitted",
+        insertions: 0,
+        deletions: 1,
+        operation: "removed",
+      },
     ]);
   });
 

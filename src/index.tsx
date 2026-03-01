@@ -7,13 +7,13 @@ const renderer = await createCliRenderer({
   targetFps: 60,
   consoleOptions: {
     sizePercent: 30,
-  }
+  },
 });
 
 renderer.keyInput.on("keypress", (key) => {
   if (key.ctrl && key.name === "l") {
-    renderer.console.toggle()
+    renderer.console.toggle();
   }
-})
+});
 
 createRoot(renderer).render(<App />);

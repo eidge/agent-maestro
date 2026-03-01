@@ -1,44 +1,40 @@
-import { useCallback, useMemo } from "react"
-import type { ChangedFile } from "../lib/git"
+import { useCallback, useMemo } from "react";
+import type { ChangedFile } from "../lib/git";
 
 export interface FileSelectorProps {
-  files: ChangedFile[]
-  selectedFile: ChangedFile | null
-  onSelect: (file: ChangedFile) => void
-  focused?: boolean
+  files: ChangedFile[];
+  selectedFile: ChangedFile | null;
+  onSelect: (file: ChangedFile) => void;
+  focused?: boolean;
 }
 
-export function FileSelector({
-  files,
-  selectedFile,
-  onSelect,
-  focused,
-}: FileSelectorProps) {
-  const selectOptions = useMemo(() =>
-    files.map(f => ({
-      name: `${f.operation === "created" ? "+" : f.operation === "removed" ? "-" : "~"} ${f.path}`,
-      description: `+${f.insertions} -${f.deletions}`,
-      value: f.path,
-    })),
+export function FileSelector({ files, selectedFile, onSelect, focused }: FileSelectorProps) {
+  const selectOptions = useMemo(
+    () =>
+      files.map((f) => ({
+        name: `${f.operation === "created" ? "+" : f.operation === "removed" ? "-" : "~"} ${f.path}`,
+        description: `+${f.insertions} -${f.deletions}`,
+        value: f.path,
+      })),
     [files],
-  )
+  );
 
   const selectedIndex = useMemo(() => {
-    if (!selectedFile) return 0
-    const idx = files.findIndex(f => f.path === selectedFile.path)
-    return idx >= 0 ? idx : 0
-  }, [selectedFile, files])
+    if (!selectedFile) return 0;
+    const idx = files.findIndex((f) => f.path === selectedFile.path);
+    return idx >= 0 ? idx : 0;
+  }, [selectedFile, files]);
 
   const onChange = useCallback(
     (index: number) => {
-      const file = files[index]
-      if (file) onSelect(file)
+      const file = files[index];
+      if (file) onSelect(file);
     },
     [files, onSelect],
-  )
+  );
 
   if (selectOptions.length === 0) {
-    return <text fg="#565f89">no changed files</text>
+    return <text fg="#565f89">no changed files</text>;
   }
 
   return (
@@ -50,5 +46,5 @@ export function FileSelector({
       showScrollIndicator
       height="100%"
     />
-  )
+  );
 }

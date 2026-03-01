@@ -1,31 +1,33 @@
-import { useEffect, useMemo, useRef, useState } from "react"
-import { Git, type ChangedFile, type CommitInfo, type FileDiff } from "../lib/git"
-import type { SelectedCommit } from "../components/CommitSelector"
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Git, type ChangedFile, type CommitInfo, type FileDiff } from "../lib/git";
+import type { SelectedCommit } from "../components/CommitSelector";
 
 /** The subset of {@link Git} that {@link useGitData} depends on. */
 export interface GitProvider {
-  getCurrentBranchName(): Promise<string>
-  getCommitsSinceBase(): Promise<CommitInfo[]>
-  getUncommitedFiles(): Promise<ChangedFile[]>
-  getChangedFilesForCommit(commit: CommitInfo): Promise<ChangedFile[]>
-  getFileDiff(file: ChangedFile): Promise<FileDiff>
+  getCurrentBranchName(): Promise<string>;
+  getCommitsSinceBase(): Promise<CommitInfo[]>;
+  getUncommitedFiles(): Promise<ChangedFile[]>;
+  getChangedFilesForCommit(commit: CommitInfo): Promise<ChangedFile[]>;
+  getFileDiff(file: ChangedFile): Promise<FileDiff>;
 }
 
 export function commitsEqual(a: CommitInfo[], b: CommitInfo[]): boolean {
-  if (a.length !== b.length) return false
-  return a.every((c, i) => c.sha === b[i]!.sha)
+  if (a.length !== b.length) return false;
+  return a.every((c, i) => c.sha === b[i]!.sha);
 }
 
 export function filesEqual(a: ChangedFile[], b: ChangedFile[]): boolean {
-  if (a.length !== b.length) return false
+  if (a.length !== b.length) return false;
   return a.every((f, i) => {
-    const other = b[i]!
-    return f.path === other.path
-      && f.commitSha === other.commitSha
-      && f.insertions === other.insertions
-      && f.deletions === other.deletions
-      && f.operation === other.operation
-  })
+    const other = b[i]!;
+    return (
+      f.path === other.path &&
+      f.commitSha === other.commitSha &&
+      f.insertions === other.insertions &&
+      f.deletions === other.deletions &&
+      f.operation === other.operation
+    );
+  });
 }
 
 export function isSelectedCommitValid(
@@ -33,123 +35,123 @@ export function isSelectedCommitValid(
   commits: CommitInfo[],
   uncommittedFiles: ChangedFile[],
 ): boolean {
-  if (!selected) return false
-  if (selected.kind === "uncommitted") return uncommittedFiles.length > 0
-  return commits.some(c => c.sha === selected.commit.sha)
+  if (!selected) return false;
+  if (selected.kind === "uncommitted") return uncommittedFiles.length > 0;
+  return commits.some((c) => c.sha === selected.commit.sha);
 }
 
-export function isSelectedFileValid(
-  selected: ChangedFile | null,
-  files: ChangedFile[],
-): boolean {
-  if (!selected) return false
-  return files.some(f => f.path === selected.path && f.commitSha === selected.commitSha)
+export function isSelectedFileValid(selected: ChangedFile | null, files: ChangedFile[]): boolean {
+  if (!selected) return false;
+  return files.some((f) => f.path === selected.path && f.commitSha === selected.commitSha);
 }
 
 export interface GitData {
-  loading: boolean
-  branchName: string | undefined
-  commits: CommitInfo[]
-  uncommitedFiles: ChangedFile[]
-  committedFiles: ChangedFile[]
-  selectedCommit: SelectedCommit | null
-  selectedFile: ChangedFile | null
-  selectedDiff: FileDiff | undefined
-  setSelectedCommit: (commit: SelectedCommit | null) => void
-  setSelectedFile: (file: ChangedFile | null) => void
+  loading: boolean;
+  branchName: string | undefined;
+  commits: CommitInfo[];
+  uncommitedFiles: ChangedFile[];
+  committedFiles: ChangedFile[];
+  selectedCommit: SelectedCommit | null;
+  selectedFile: ChangedFile | null;
+  selectedDiff: FileDiff | undefined;
+  setSelectedCommit: (commit: SelectedCommit | null) => void;
+  setSelectedFile: (file: ChangedFile | null) => void;
 }
 
 export interface UseGitDataOptions {
-  git?: GitProvider
-  pollInterval?: number
+  git?: GitProvider;
+  pollInterval?: number;
 }
 
 export function useGitData(options?: UseGitDataOptions): GitData {
-  const git = useMemo(() => options?.git ?? new Git(), [options?.git])
-  const [loading, setLoading] = useState(true)
-  const [branchName, setBranchName] = useState<string>()
-  const [commits, setCommits] = useState<CommitInfo[]>([])
-  const [uncommitedFiles, setUncommitedFiles] = useState<ChangedFile[]>([])
-  const [committedFiles, setCommittedFiles] = useState<ChangedFile[]>([])
-  const [selectedDiff, setSelectedDiff] = useState<FileDiff>()
+  const git = useMemo(() => options?.git ?? new Git(), [options?.git]);
+  const [loading, setLoading] = useState(true);
+  const [branchName, setBranchName] = useState<string>();
+  const [commits, setCommits] = useState<CommitInfo[]>([]);
+  const [uncommitedFiles, setUncommitedFiles] = useState<ChangedFile[]>([]);
+  const [committedFiles, setCommittedFiles] = useState<ChangedFile[]>([]);
+  const [selectedDiff, setSelectedDiff] = useState<FileDiff>();
 
-  const [selectedCommit, setSelectedCommit] = useState<SelectedCommit | null>(null)
-  const [selectedFile, setSelectedFile] = useState<ChangedFile | null>(null)
+  const [selectedCommit, setSelectedCommit] = useState<SelectedCommit | null>(null);
+  const [selectedFile, setSelectedFile] = useState<ChangedFile | null>(null);
 
-  const selectedCommitRef = useRef(selectedCommit)
-  const selectedFileRef = useRef(selectedFile)
+  const selectedCommitRef = useRef(selectedCommit);
+  const selectedFileRef = useRef(selectedFile);
   useEffect(() => {
-    selectedCommitRef.current = selectedCommit
-    selectedFileRef.current = selectedFile
-  }, [selectedCommit, selectedFile])
+    selectedCommitRef.current = selectedCommit;
+    selectedFileRef.current = selectedFile;
+  }, [selectedCommit, selectedFile]);
 
   useEffect(() => {
-    let prevBranch: string | undefined
-    let prevCommits: CommitInfo[] = []
-    let prevUncommitted: ChangedFile[] = []
-    let prevCommitted: ChangedFile[] = []
+    let prevBranch: string | undefined;
+    let prevCommits: CommitInfo[] = [];
+    let prevUncommitted: ChangedFile[] = [];
+    let prevCommitted: ChangedFile[] = [];
 
     const updateCountsFn = async () => {
       const [branch, newCommits, uncommitted] = await Promise.all([
         git.getCurrentBranchName(),
         git.getCommitsSinceBase(),
         git.getUncommitedFiles(),
-      ])
+      ]);
 
-      const committedRequests = await Promise.all(newCommits.map((c) => git.getChangedFilesForCommit(c)))
-      const committed = committedRequests.flat()
+      const committedRequests = await Promise.all(
+        newCommits.map((c) => git.getChangedFilesForCommit(c)),
+      );
+      const committed = committedRequests.flat();
 
       // Only update state when data has actually changed
       if (branch !== prevBranch) {
-        setBranchName(branch)
-        prevBranch = branch
+        setBranchName(branch);
+        prevBranch = branch;
       }
       if (!commitsEqual(newCommits, prevCommits)) {
-        setCommits(newCommits)
-        prevCommits = newCommits
+        setCommits(newCommits);
+        prevCommits = newCommits;
       }
       if (!filesEqual(uncommitted, prevUncommitted)) {
-        setUncommitedFiles(uncommitted)
-        prevUncommitted = uncommitted
+        setUncommitedFiles(uncommitted);
+        prevUncommitted = uncommitted;
       }
       if (!filesEqual(committed, prevCommitted)) {
-        setCommittedFiles(committed)
-        prevCommitted = committed
+        setCommittedFiles(committed);
+        prevCommitted = committed;
       }
 
       // Only adjust selection when the currently selected item is no longer valid
-      let effectiveCommit = selectedCommitRef.current
+      let effectiveCommit = selectedCommitRef.current;
       if (!isSelectedCommitValid(effectiveCommit, newCommits, uncommitted)) {
         if (uncommitted.length > 0) {
-          effectiveCommit = { kind: "uncommitted" }
+          effectiveCommit = { kind: "uncommitted" };
         } else if (newCommits.length > 0) {
-          effectiveCommit = { kind: "commit", commit: newCommits[0]! }
+          effectiveCommit = { kind: "commit", commit: newCommits[0]! };
         } else {
-          effectiveCommit = null
+          effectiveCommit = null;
         }
-        setSelectedCommit(effectiveCommit)
+        setSelectedCommit(effectiveCommit);
       }
 
-      const relevantFiles = effectiveCommit?.kind === "uncommitted"
-        ? uncommitted
-        : committed.filter(f => f.commitSha === effectiveCommit?.commit.sha)
+      const relevantFiles =
+        effectiveCommit?.kind === "uncommitted"
+          ? uncommitted
+          : committed.filter((f) => f.commitSha === effectiveCommit?.commit.sha);
 
       if (!isSelectedFileValid(selectedFileRef.current, relevantFiles)) {
-        setSelectedFile(relevantFiles[0] ?? null)
+        setSelectedFile(relevantFiles[0] ?? null);
       }
 
-      setLoading(false)
-    }
-    updateCountsFn()
-    const interval = setInterval(updateCountsFn, options?.pollInterval ?? 2000)
-    return () => clearInterval(interval)
-  }, [git, options?.pollInterval])
+      setLoading(false);
+    };
+    updateCountsFn();
+    const interval = setInterval(updateCountsFn, options?.pollInterval ?? 2000);
+    return () => clearInterval(interval);
+  }, [git, options?.pollInterval]);
 
   useEffect(() => {
-    if (!selectedFile) return
+    if (!selectedFile) return;
 
-    git.getFileDiff(selectedFile).then(setSelectedDiff)
-  }, [git, selectedFile])
+    git.getFileDiff(selectedFile).then(setSelectedDiff);
+  }, [git, selectedFile]);
 
   return {
     loading,
@@ -162,5 +164,5 @@ export function useGitData(options?: UseGitDataOptions): GitData {
     selectedDiff,
     setSelectedCommit,
     setSelectedFile,
-  }
+  };
 }

@@ -1,23 +1,19 @@
-import { useState } from "react"
-import { RGBA, SyntaxStyle } from "@opentui/core"
-import { Panel } from "../components/ui/Panel"
-import { CommitSelector } from "../components/CommitSelector"
-import { FileSelector } from "../components/FileSelector"
-import { useKeyboardShortcut } from "../hooks/keyboard"
-import { useGitData } from "../hooks/git-data"
+import { useState } from "react";
+import { RGBA, SyntaxStyle } from "@opentui/core";
+import { Panel } from "../components/ui/Panel";
+import { CommitSelector } from "../components/CommitSelector";
+import { FileSelector } from "../components/FileSelector";
+import { useKeyboardShortcut } from "../hooks/keyboard";
+import { useGitData } from "../hooks/git-data";
 
-const focusablePanels = [
-  "commits",
-  "files",
-  "diff"
-] as const
+const focusablePanels = ["commits", "files", "diff"] as const;
 
-type FocusablePanel = (typeof focusablePanels)[number]
+type FocusablePanel = (typeof focusablePanels)[number];
 
 const diffSyntaxStyle = SyntaxStyle.fromStyles({
-  default: { fg: RGBA.fromHex('#0000FF') },
-  keyword: { fg: RGBA.fromHex('#FF0000') }
-})
+  default: { fg: RGBA.fromHex("#0000FF") },
+  keyword: { fg: RGBA.fromHex("#FF0000") },
+});
 
 export function MainScreen() {
   const {
@@ -31,43 +27,39 @@ export function MainScreen() {
     selectedDiff,
     setSelectedCommit,
     setSelectedFile,
-  } = useGitData()
+  } = useGitData();
 
-  const [focusedPanel, setFocusedPanel] = useState<FocusablePanel>("commits")
+  const [focusedPanel, setFocusedPanel] = useState<FocusablePanel>("commits");
 
-  useKeyboardShortcut('tab', 'move between panels', () => {
-    let index = focusablePanels.indexOf(focusedPanel) + 1
+  useKeyboardShortcut("tab", "move between panels", () => {
+    let index = focusablePanels.indexOf(focusedPanel) + 1;
 
     if (index >= focusablePanels.length) {
-      index = 0
+      index = 0;
     }
 
-    setFocusedPanel(focusablePanels[index]!)
-  })
+    setFocusedPanel(focusablePanels[index]!);
+  });
 
-  const currentFiles = selectedCommit?.kind === 'uncommitted' ?
-    uncommitedFiles
-    :
-    committedFiles.filter(f => f.commitSha === selectedCommit?.commit.sha)
+  const currentFiles =
+    selectedCommit?.kind === "uncommitted"
+      ? uncommitedFiles
+      : committedFiles.filter((f) => f.commitSha === selectedCommit?.commit.sha);
 
   if (loading) {
-    return null
+    return null;
   }
 
   return (
     <box flexDirection="column" width="100%" height="100%">
       {/* Header */}
-      <box
-        flexDirection="row"
-        paddingX={1}
-        marginY={1}
-        height={2}
-        alignItems="flex-end"
-        >
+      <box flexDirection="row" paddingX={1} marginY={1} height={2} alignItems="flex-end">
         <ascii-font font="tiny" text="Agent-Maestro" />
         <box marginLeft={1} paddingY={0}>
           <text>
-            <span fg="#7aa2f7"><strong>{branchName ?? "..."}</strong></span>
+            <span fg="#7aa2f7">
+              <strong>{branchName ?? "..."}</strong>
+            </span>
           </text>
         </box>
       </box>
@@ -75,17 +67,11 @@ export function MainScreen() {
       {/* Body: sidebar + main */}
       <box flexDirection="row" flexGrow={1} width="100%" columnGap={2}>
         {/* Sidebar */}
-        <box
-          width={50}
-          flexDirection="column"
-        >
+        <box width={50} flexDirection="column">
           {/* Branch */}
 
           {/* Commits select */}
-          <Panel
-            title="Commits"
-            height={20}
-          >
+          <Panel title="Commits" height={20}>
             <CommitSelector
               commits={commits}
               uncommitedFileCount={uncommitedFiles.length}
@@ -96,11 +82,7 @@ export function MainScreen() {
           </Panel>
 
           {/* File select for selected commit */}
-          <Panel
-            marginTop={1}
-            title="Changed Files"
-            flexGrow={1}
-          >
+          <Panel marginTop={1} title="Changed Files" flexGrow={1}>
             <FileSelector
               files={currentFiles}
               selectedFile={selectedFile}
@@ -112,10 +94,7 @@ export function MainScreen() {
 
         {/* Main diff area */}
         {selectedDiff ? (
-          <Panel
-            title={selectedDiff.path}
-            flexGrow={1}
-          >
+          <Panel title={selectedDiff.path} flexGrow={1}>
             <scrollbox focused={focusedPanel === "diff"}>
               <box flexDirection="column">
                 <diff
@@ -134,5 +113,5 @@ export function MainScreen() {
         )}
       </box>
     </box>
-  )
+  );
 }

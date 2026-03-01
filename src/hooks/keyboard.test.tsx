@@ -1,10 +1,10 @@
-import { describe, test, expect, afterEach, spyOn } from "bun:test"
-import { testRender } from "@opentui/react/test-utils"
-import { Provider, createStore } from "jotai"
-import { act, Component, useState, type ReactNode } from "react"
-import { useKeyboard } from "@opentui/react"
-import type { KeyEvent } from "@opentui/core"
-import { useKeyboardShortcut, useKeyboardShortcutRegistry } from "./keyboard"
+import { describe, test, expect, afterEach, spyOn } from "bun:test";
+import { testRender } from "@opentui/react/test-utils";
+import { Provider, createStore } from "jotai";
+import { act, Component, useState, type ReactNode } from "react";
+import { useKeyboard } from "@opentui/react";
+import type { KeyEvent } from "@opentui/core";
+import { useKeyboardShortcut, useKeyboardShortcutRegistry } from "./keyboard";
 
 // ---------------------------------------------------------------------------
 // Global type declaration
@@ -12,14 +12,14 @@ import { useKeyboardShortcut, useKeyboardShortcutRegistry } from "./keyboard"
 
 // Set by @opentui/react test-utils; controls React act() warnings.
 declare global {
-  var IS_REACT_ACT_ENVIRONMENT: boolean
+  var IS_REACT_ACT_ENVIRONMENT: boolean;
 }
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-type TestSetup = Awaited<ReturnType<typeof testRender>>
+type TestSetup = Awaited<ReturnType<typeof testRender>>;
 
 /**
  * Create the test renderer and perform the initial render.
@@ -30,14 +30,11 @@ type TestSetup = Awaited<ReturnType<typeof testRender>>
  * even `<text>hello</text>` with zero state/effects triggers it). We disable
  * the flag after setup so the unavoidable framework warning is not emitted.
  */
-async function mount(
-  jsx: ReactNode,
-  opts: { width: number; height: number },
-): Promise<TestSetup> {
-  const ts = await testRender(jsx, opts)
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false
-  await ts.renderOnce()
-  return ts
+async function mount(jsx: ReactNode, opts: { width: number; height: number }): Promise<TestSetup> {
+  const ts = await testRender(jsx, opts);
+  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
+  await ts.renderOnce();
+  return ts;
 }
 
 /**
@@ -51,12 +48,12 @@ async function pressKeyAndRender(
   key: string,
   modifiers?: { shift?: boolean; ctrl?: boolean; meta?: boolean },
 ) {
-  globalThis.IS_REACT_ACT_ENVIRONMENT = true
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   await act(async () => {
-    setup.mockInput.pressKey(key, modifiers)
-    await setup.renderOnce()
-  })
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false
+    setup.mockInput.pressKey(key, modifiers);
+    await setup.renderOnce();
+  });
+  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
 }
 
 // ---------------------------------------------------------------------------
@@ -64,79 +61,60 @@ async function pressKeyAndRender(
 // ---------------------------------------------------------------------------
 
 /** Renders `<shortcut>-count:<N>` where N increments on each matching keypress. */
-function ShortcutCounter({
-  shortcut,
-  description,
-}: {
-  shortcut: string
-  description: string
-}) {
-  const [count, setCount] = useState(0)
-  useKeyboardShortcut(shortcut, description, () => setCount((c) => c + 1))
-  return <text>{shortcut}-count:{count}</text>
+function ShortcutCounter({ shortcut, description }: { shortcut: string; description: string }) {
+  const [count, setCount] = useState(0);
+  useKeyboardShortcut(shortcut, description, () => setCount((c) => c + 1));
+  return (
+    <text>
+      {shortcut}-count:{count}
+    </text>
+  );
 }
 
 /** Renders `registry:[key=desc|key=desc]` sorted alphabetically. */
 function RegistryDisplay() {
-  const registry = useKeyboardShortcutRegistry()
+  const registry = useKeyboardShortcutRegistry();
   const entries = Object.entries(registry)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([k, v]) => `${k}=${v}`)
-    .join("|")
-  return <text>registry:[{entries}]</text>
+    .join("|");
+  return <text>registry:[{entries}]</text>;
 }
 
 /** Registers a shortcut with a no-op callback; renders nothing visible. */
-function ShortcutNoop({
-  shortcut,
-  description,
-}: {
-  shortcut: string
-  description: string
-}) {
-  useKeyboardShortcut(shortcut, description, () => {})
-  return <text />
+function ShortcutNoop({ shortcut, description }: { shortcut: string; description: string }) {
+  useKeyboardShortcut(shortcut, description, () => {});
+  return <text />;
 }
 
 /** Captures the last KeyEvent received for inspection. */
-function EventCapture({
-  shortcut,
-  description,
-}: {
-  shortcut: string
-  description: string
-}) {
-  const [event, setEvent] = useState<KeyEvent | null>(null)
-  useKeyboardShortcut(shortcut, description, (e) => setEvent(e))
-  if (!event) return <text>event:none</text>
+function EventCapture({ shortcut, description }: { shortcut: string; description: string }) {
+  const [event, setEvent] = useState<KeyEvent | null>(null);
+  useKeyboardShortcut(shortcut, description, (e) => setEvent(e));
+  if (!event) return <text>event:none</text>;
   return (
     <text>
-      event:{event.name},ctrl:{String(event.ctrl)},shift:{String(event.shift)},type:{event.eventType}
+      event:{event.name},ctrl:{String(event.ctrl)},shift:{String(event.shift)},type:
+      {event.eventType}
     </text>
-  )
+  );
 }
 
 /**
  * Conditionally mounts a shortcut child. Pressing "t" unmounts / remounts
  * the child so we can test cleanup behaviour.
  */
-function ToggleableShortcut({
-  shortcut,
-  description,
-}: {
-  shortcut: string
-  description: string
-}) {
-  const [active, setActive] = useState(true)
+function ToggleableShortcut({ shortcut, description }: { shortcut: string; description: string }) {
+  const [active, setActive] = useState(true);
   useKeyboard((e) => {
-    if (e.name === "t") setActive((a) => !a)
-  })
+    if (e.name === "t") setActive((a) => !a);
+  });
   return (
     <box>
       {active && <ShortcutNoop shortcut={shortcut} description={description} />}
       <RegistryDisplay />
     </box>
-  )
+  );
 }
 
 /**
@@ -152,26 +130,26 @@ function ToggleableShortcut({
  * The `unknown` → function-type cast keeps the class working at runtime.
  */
 const ErrorBoundary = class extends Component<{ children: ReactNode }, { error: string | null }> {
-  override state = { error: null as string | null }
+  override state = { error: null as string | null };
   static getDerivedStateFromError(error: Error) {
-    return { error: error.message }
+    return { error: error.message };
   }
   override render(): ReactNode {
-    if (this.state.error) return <text>error:{this.state.error}</text>
-    return this.props.children as ReactNode
+    if (this.state.error) return <text>error:{this.state.error}</text>;
+    return this.props.children as ReactNode;
   }
-} as unknown as { (props: { children: ReactNode }): React.ReactElement | null }
+} as unknown as { (props: { children: ReactNode }): React.ReactElement | null };
 
 // ---------------------------------------------------------------------------
 // useKeyboardShortcut
 // ---------------------------------------------------------------------------
 
 describe("useKeyboardShortcut", () => {
-  let testSetup: TestSetup
+  let testSetup: TestSetup;
 
   afterEach(() => {
-    if (testSetup) testSetup.renderer.destroy()
-  })
+    if (testSetup) testSetup.renderer.destroy();
+  });
 
   test("calls callback when matching key is pressed", async () => {
     testSetup = await mount(
@@ -179,13 +157,13 @@ describe("useKeyboardShortcut", () => {
         <ShortcutCounter shortcut="x" description="do x" />
       </Provider>,
       { width: 40, height: 10 },
-    )
+    );
 
-    expect(testSetup.captureCharFrame()).toContain("x-count:0")
+    expect(testSetup.captureCharFrame()).toContain("x-count:0");
 
-    await pressKeyAndRender(testSetup, "x")
-    expect(testSetup.captureCharFrame()).toContain("x-count:1")
-  })
+    await pressKeyAndRender(testSetup, "x");
+    expect(testSetup.captureCharFrame()).toContain("x-count:1");
+  });
 
   test("increments on every matching keypress", async () => {
     testSetup = await mount(
@@ -193,19 +171,19 @@ describe("useKeyboardShortcut", () => {
         <ShortcutCounter shortcut="x" description="do x" />
       </Provider>,
       { width: 40, height: 10 },
-    )
+    );
 
-    globalThis.IS_REACT_ACT_ENVIRONMENT = true
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
     await act(async () => {
-      testSetup.mockInput.pressKey("x")
-      testSetup.mockInput.pressKey("x")
-      testSetup.mockInput.pressKey("x")
-      await testSetup.renderOnce()
-    })
-    globalThis.IS_REACT_ACT_ENVIRONMENT = false
+      testSetup.mockInput.pressKey("x");
+      testSetup.mockInput.pressKey("x");
+      testSetup.mockInput.pressKey("x");
+      await testSetup.renderOnce();
+    });
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false;
 
-    expect(testSetup.captureCharFrame()).toContain("x-count:3")
-  })
+    expect(testSetup.captureCharFrame()).toContain("x-count:3");
+  });
 
   test("does not call callback for non-matching keys", async () => {
     testSetup = await mount(
@@ -213,14 +191,14 @@ describe("useKeyboardShortcut", () => {
         <ShortcutCounter shortcut="x" description="do x" />
       </Provider>,
       { width: 40, height: 10 },
-    )
+    );
 
-    await pressKeyAndRender(testSetup, "y")
-    await pressKeyAndRender(testSetup, "z")
-    await pressKeyAndRender(testSetup, "a")
+    await pressKeyAndRender(testSetup, "y");
+    await pressKeyAndRender(testSetup, "z");
+    await pressKeyAndRender(testSetup, "a");
 
-    expect(testSetup.captureCharFrame()).toContain("x-count:0")
-  })
+    expect(testSetup.captureCharFrame()).toContain("x-count:0");
+  });
 
   test("registers shortcut in the registry on mount", async () => {
     testSetup = await mount(
@@ -231,10 +209,10 @@ describe("useKeyboardShortcut", () => {
         </box>
       </Provider>,
       { width: 80, height: 10 },
-    )
+    );
 
-    expect(testSetup.captureCharFrame()).toContain("registry:[q=quit app]")
-  })
+    expect(testSetup.captureCharFrame()).toContain("registry:[q=quit app]");
+  });
 
   test("unregisters shortcut from registry on unmount", async () => {
     testSetup = await mount(
@@ -242,14 +220,14 @@ describe("useKeyboardShortcut", () => {
         <ToggleableShortcut shortcut="x" description="do x" />
       </Provider>,
       { width: 80, height: 10 },
-    )
+    );
 
-    expect(testSetup.captureCharFrame()).toContain("registry:[x=do x]")
+    expect(testSetup.captureCharFrame()).toContain("registry:[x=do x]");
 
     // Press "t" to unmount the shortcut child
-    await pressKeyAndRender(testSetup, "t")
-    expect(testSetup.captureCharFrame()).toContain("registry:[]")
-  })
+    await pressKeyAndRender(testSetup, "t");
+    expect(testSetup.captureCharFrame()).toContain("registry:[]");
+  });
 
   test("throws when registering a duplicate shortcut", async () => {
     const spy = spyOn(console, "error").mockImplementation(() => {});
@@ -263,13 +241,13 @@ describe("useKeyboardShortcut", () => {
         </ErrorBoundary>
       </Provider>,
       { width: 80, height: 10 },
-    )
+    );
 
     expect(testSetup.captureCharFrame()).toContain(
       "error:Keyboard shortcut (x) already registered.",
-    )
+    );
     spy.mockRestore();
-  })
+  });
 
   test("supports multiple non-conflicting shortcuts simultaneously", async () => {
     testSetup = await mount(
@@ -281,26 +259,26 @@ describe("useKeyboardShortcut", () => {
         </box>
       </Provider>,
       { width: 80, height: 10 },
-    )
+    );
 
-    const initial = testSetup.captureCharFrame()
-    expect(initial).toContain("registry:[a=do a|b=do b]")
-    expect(initial).toContain("a-count:0")
-    expect(initial).toContain("b-count:0")
+    const initial = testSetup.captureCharFrame();
+    expect(initial).toContain("registry:[a=do a|b=do b]");
+    expect(initial).toContain("a-count:0");
+    expect(initial).toContain("b-count:0");
 
     // Only "a" should increment
-    await pressKeyAndRender(testSetup, "a")
-    const afterA = testSetup.captureCharFrame()
-    expect(afterA).toContain("a-count:1")
-    expect(afterA).toContain("b-count:0")
+    await pressKeyAndRender(testSetup, "a");
+    const afterA = testSetup.captureCharFrame();
+    expect(afterA).toContain("a-count:1");
+    expect(afterA).toContain("b-count:0");
 
     // Only "b" should increment
-    await pressKeyAndRender(testSetup, "b")
-    await testSetup.renderOnce()
-    const afterB = testSetup.captureCharFrame()
-    expect(afterB).toContain("a-count:1")
-    expect(afterB).toContain("b-count:1")
-  })
+    await pressKeyAndRender(testSetup, "b");
+    await testSetup.renderOnce();
+    const afterB = testSetup.captureCharFrame();
+    expect(afterB).toContain("a-count:1");
+    expect(afterB).toContain("b-count:1");
+  });
 
   test("passes the full KeyEvent to the callback", async () => {
     testSetup = await mount(
@@ -308,28 +286,28 @@ describe("useKeyboardShortcut", () => {
         <EventCapture shortcut="s" description="save" />
       </Provider>,
       { width: 80, height: 10 },
-    )
+    );
 
-    expect(testSetup.captureCharFrame()).toContain("event:none")
+    expect(testSetup.captureCharFrame()).toContain("event:none");
 
-    await pressKeyAndRender(testSetup, "s", { ctrl: true })
-    const frame = testSetup.captureCharFrame()
-    expect(frame).toContain("event:s")
-    expect(frame).toContain("ctrl:true")
-    expect(frame).toContain("type:press")
-  })
-})
+    await pressKeyAndRender(testSetup, "s", { ctrl: true });
+    const frame = testSetup.captureCharFrame();
+    expect(frame).toContain("event:s");
+    expect(frame).toContain("ctrl:true");
+    expect(frame).toContain("type:press");
+  });
+});
 
 // ---------------------------------------------------------------------------
 // useKeyboardShortcutRegistry
 // ---------------------------------------------------------------------------
 
 describe("useKeyboardShortcutRegistry", () => {
-  let testSetup: TestSetup
+  let testSetup: TestSetup;
 
   afterEach(() => {
-    if (testSetup) testSetup.renderer.destroy()
-  })
+    if (testSetup) testSetup.renderer.destroy();
+  });
 
   test("returns empty registry when no shortcuts are registered", async () => {
     testSetup = await mount(
@@ -337,10 +315,10 @@ describe("useKeyboardShortcutRegistry", () => {
         <RegistryDisplay />
       </Provider>,
       { width: 40, height: 10 },
-    )
+    );
 
-    expect(testSetup.captureCharFrame()).toContain("registry:[]")
-  })
+    expect(testSetup.captureCharFrame()).toContain("registry:[]");
+  });
 
   test("reflects all currently mounted shortcuts", async () => {
     testSetup = await mount(
@@ -353,10 +331,8 @@ describe("useKeyboardShortcutRegistry", () => {
         </box>
       </Provider>,
       { width: 80, height: 10 },
-    )
+    );
 
-    expect(testSetup.captureCharFrame()).toContain(
-      "registry:[a=action a|b=action b|c=action c]",
-    )
-  })
-})
+    expect(testSetup.captureCharFrame()).toContain("registry:[a=action a|b=action b|c=action c]");
+  });
+});

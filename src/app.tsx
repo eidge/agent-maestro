@@ -3,24 +3,24 @@ import { useKeyboardShortcutRegistry } from "./hooks/keyboard";
 import { useEffect, useState } from "react";
 import { MainScreen } from "./screens/MainScreen";
 
-type ScreenName = "splash" | "main"
+type ScreenName = "splash" | "main";
 
 export function App() {
-  const [currentScreen, setCurrentScreen] = useState<ScreenName>("main")
-  const shortcuts = useKeyboardShortcutRegistry()
+  const [currentScreen, setCurrentScreen] = useState<ScreenName>("main");
+  const shortcuts = useKeyboardShortcutRegistry();
 
   const onDismissSplashScreen = () => {
-    setCurrentScreen("main")
-  }
+    setCurrentScreen("main");
+  };
 
   useEffect(() => {
-    console.log(shortcuts)
-  }, [shortcuts])
+    console.log(shortcuts);
+  }, [shortcuts]);
 
-  switch(currentScreen) {
-    case 'splash':
-      return <SplashScreen onDismiss={onDismissSplashScreen} />
-    case 'main':
-      return <MainScreen />
+  switch (currentScreen) {
+    case "splash":
+      return <SplashScreen onDismiss={onDismissSplashScreen} />;
+    case "main":
+      return <MainScreen />;
   }
 }
