@@ -28,16 +28,6 @@ function tsHighlights(lang: string, branch = "master"): string {
   return ghRaw("tree-sitter", `tree-sitter-${lang}`, branch, "queries/highlights.scm");
 }
 
-// nvim-treesitter query sources (used for TSX which needs combined queries)
-function nvimQuery(lang: string): string {
-  return ghRaw(
-    "nvim-treesitter",
-    "nvim-treesitter",
-    "master",
-    `queries/${lang}/highlights.scm`,
-  );
-}
-
 /**
  * Additional tree-sitter parsers beyond the bundled set (javascript, typescript,
  * markdown, markdown_inline, zig). WASM grammars and highlight queries are
@@ -111,7 +101,9 @@ export const additionalParsers: FiletypeParserOptions[] = [
     filetype: "lua",
     wasm: ghRelease("tree-sitter-grammars", "tree-sitter-lua", "v0.5.0", "tree-sitter-lua.wasm"),
     queries: {
-      highlights: [ghRaw("tree-sitter-grammars", "tree-sitter-lua", "main", "queries/highlights.scm")],
+      highlights: [
+        ghRaw("tree-sitter-grammars", "tree-sitter-lua", "main", "queries/highlights.scm"),
+      ],
     },
   },
   {
@@ -142,21 +134,28 @@ export const additionalParsers: FiletypeParserOptions[] = [
     },
   },
 
-  // ── JSX / TSX (use combined nvim-treesitter queries) ─────────────
+  // ── JSX / TSX (use standard tree-sitter queries, NOT nvim-treesitter
+  //    which relies on Neovim-specific predicates like #lua-match?) ───
   {
     filetype: "typescriptreact",
-    wasm: ghRelease(
-      "tree-sitter",
-      "tree-sitter-typescript",
-      "v0.23.2",
-      "tree-sitter-tsx.wasm",
-    ),
-    queries: { highlights: [nvimQuery("ecma"), nvimQuery("typescript"), nvimQuery("jsx")] },
+    wasm: ghRelease("tree-sitter", "tree-sitter-typescript", "v0.23.2", "tree-sitter-tsx.wasm"),
+    queries: {
+      highlights: [
+        tsHighlights("javascript"),
+        ghRaw("tree-sitter", "tree-sitter-javascript", "v0.25.0", "queries/highlights-jsx.scm"),
+        ghRaw("tree-sitter", "tree-sitter-typescript", "v0.23.2", "queries/highlights.scm"),
+      ],
+    },
   },
   {
     filetype: "javascriptreact",
     wasm: tsRelease("javascript", "v0.25.0", "tree-sitter-javascript.wasm"),
-    queries: { highlights: [nvimQuery("ecma"), nvimQuery("jsx")] },
+    queries: {
+      highlights: [
+        tsHighlights("javascript"),
+        ghRaw("tree-sitter", "tree-sitter-javascript", "v0.25.0", "queries/highlights-jsx.scm"),
+      ],
+    },
   },
 ];
 

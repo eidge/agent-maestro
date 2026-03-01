@@ -87,6 +87,7 @@ export function useGitData(options?: UseGitDataOptions): GitData {
     let prevCommits: CommitInfo[] = [];
     let prevUncommitted: ChangedFile[] = [];
     let prevCommitted: ChangedFile[] = [];
+    let prevDiff: FileDiff | undefined;
 
     const updateCountsFn = async () => {
       const [branch, newCommits, uncommitted] = await Promise.all([
@@ -136,8 +137,22 @@ export function useGitData(options?: UseGitDataOptions): GitData {
           ? uncommitted
           : committed.filter((f) => f.commitSha === effectiveCommit?.commit.sha);
 
-      if (!isSelectedFileValid(selectedFileRef.current, relevantFiles)) {
-        setSelectedFile(relevantFiles[0] ?? null);
+      let effectiveFile = selectedFileRef.current;
+      if (!isSelectedFileValid(effectiveFile, relevantFiles)) {
+        effectiveFile = relevantFiles[0] ?? null;
+        setSelectedFile(effectiveFile);
+      }
+
+      // Refresh diff for on-disk changes (e.g. uncommitted file edited externally)
+      if (effectiveFile) {
+        const diff = await git.getFileDiff(effectiveFile);
+        if (diff.unifiedDiff !== prevDiff?.unifiedDiff || diff.path !== prevDiff?.path) {
+          setSelectedDiff(diff);
+          prevDiff = diff;
+        }
+      } else if (prevDiff !== undefined) {
+        setSelectedDiff(undefined);
+        prevDiff = undefined;
       }
 
       setLoading(false);
@@ -151,7 +166,7 @@ export function useGitData(options?: UseGitDataOptions): GitData {
     if (!selectedFile) return;
 
     git.getFileDiff(selectedFile).then(setSelectedDiff);
-  }, [git, selectedFile]);
+  }, [git, selectedFile, selectedCommit]);
 
   return {
     loading,

@@ -1,7 +1,7 @@
 import { addDefaultParsers, createCliRenderer } from "@opentui/core";
 import { createRoot } from "@opentui/react";
 import { App } from "./app";
-import { additionalParsers } from "./lib/tree-sitter-parsers";
+import { additionalParsers } from "./lib/syntax/parsers";
 
 addDefaultParsers(additionalParsers);
 
