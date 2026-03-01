@@ -49,7 +49,14 @@ export function MainScreen() {
   }
 
   return (
-    <box flexDirection="column" width="100%" height="100%" backgroundColor={theme.bg}>
+    <box
+      flexDirection="column"
+      width="100%"
+      height="100%"
+      backgroundColor={theme.bg}
+      paddingBottom={1}
+      paddingX={2}
+      >
       {/* Header */}
       <box flexDirection="row" paddingX={1} marginY={1} height={2} alignItems="flex-end">
         <ascii-font font="tiny" text="Agent-Maestro" color={theme.accent} />
@@ -91,8 +98,8 @@ export function MainScreen() {
         </box>
 
         {/* Main diff area */}
-        {selectedDiff ? (
-          <Panel title={selectedDiff.path} flexGrow={1}>
+        <Panel title={selectedDiff?.path} flexGrow={1}>
+          {selectedDiff ? (
             <scrollbox
               focused={focusedPanel === "diff"}
               scrollbarOptions={{
@@ -115,12 +122,12 @@ export function MainScreen() {
                 />
               </box>
             </scrollbox>
-          </Panel>
-        ) : (
-          <box flexGrow={1} justifyContent="center" alignItems="center">
-            <text fg={theme.textMuted}>No diffs to display</text>
-          </box>
-        )}
+          ) : (
+            <box flexGrow={1} justifyContent="center" alignItems="center">
+              <text fg={theme.textMuted}>No diffs to display</text>
+            </box>
+          )}
+        </Panel>
       </box>
     </box>
   );
