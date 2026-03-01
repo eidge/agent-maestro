@@ -16,7 +16,7 @@ const renderer = await createCliRenderer({
 });
 
 renderer.keyInput.on("keypress", (key) => {
-  if (key.ctrl && key.name === "i") {
+  if (key.shift && key.name === "i") {
     renderer.console.toggle();
   }
 });
