@@ -10,8 +10,8 @@ function ghRelease(org: string, repo: string, version: string, wasmName: string)
 /**
  * Raw GitHub URL for a highlight query .scm file.
  */
-function ghRaw(org: string, repo: string, branch: string, path: string): string {
-  return `https://raw.githubusercontent.com/${org}/${repo}/refs/heads/${branch}/${path}`;
+function ghRaw(org: string, repo: string, ref: string, path: string): string {
+  return `https://raw.githubusercontent.com/${org}/${repo}/${ref}/${path}`;
 }
 
 // Shorthand for tree-sitter org repos
