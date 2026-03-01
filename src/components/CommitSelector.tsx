@@ -73,6 +73,10 @@ export function CommitSelector({
       focused={focused}
       showScrollIndicator
       height="100%"
+      selectedBackgroundColor={theme.selectBg}
+      selectedTextColor={theme.selectText}
+      descriptionColor={theme.selectDescriptionColor}
+      textColor={theme.text}
     />
   );
 }

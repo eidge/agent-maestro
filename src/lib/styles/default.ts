@@ -54,6 +54,19 @@ export const theme = {
   removed: palette.red,
   modified: palette.yellow,
 
+  // Selection (select component)
+  selectBg: palette.surface1,
+  selectText: palette.text,
+  selectDescriptionColor: palette.overlay1,
+
+  // Diff sign colors
+  diffAddedSign: palette.green,
+  diffRemovedSign: palette.red,
+
+  // Scrollbar
+  scrollTrack: palette.surface0,
+  scrollThumb: palette.surface2,
+
   // Syntax (used by syntax/style.ts)
   syntax: {
     keyword: palette.mauve,

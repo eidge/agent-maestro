@@ -46,6 +46,10 @@ export function FileSelector({ files, selectedFile, onSelect, focused }: FileSel
       focused={focused}
       showScrollIndicator
       height="100%"
+      selectedBackgroundColor={theme.selectBg}
+      selectedTextColor={theme.selectText}
+      descriptionColor={theme.selectDescriptionColor}
+      textColor={theme.text}
     />
   );
 }

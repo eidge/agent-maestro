@@ -1,5 +1,5 @@
-import { TextAttributes } from "@opentui/core";
 import { useKeyboardShortcut } from "../hooks/keyboard";
+import { theme } from "../lib/styles/default";
 
 interface SplashScreenProps {
   onDismiss: () => void;
@@ -11,11 +11,11 @@ export function SplashScreen(props: SplashScreenProps) {
   return (
     <box alignItems="center" justifyContent="center" flexGrow={1}>
       <box justifyContent="center" alignItems="flex-end">
-        <ascii-font font="tiny" text="Agent-Maestro" />
-        <text attributes={TextAttributes.DIM}>Keep your agent orchestra in check.</text>
+        <ascii-font font="tiny" text="Agent-Maestro" color={theme.accent} />
+        <text fg={theme.textMuted}>Keep your agent orchestra in check.</text>
       </box>
       <box justifyContent="center" alignItems="center" marginTop={3}>
-        <text>Press enter to start</text>
+        <text fg={theme.textSubtle}>Press enter to start</text>
       </box>
     </box>
   );

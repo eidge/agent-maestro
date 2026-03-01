@@ -52,7 +52,7 @@ export function MainScreen() {
     <box flexDirection="column" width="100%" height="100%">
       {/* Header */}
       <box flexDirection="row" paddingX={1} marginY={1} height={2} alignItems="flex-end">
-        <ascii-font font="tiny" text="Agent-Maestro" />
+        <ascii-font font="tiny" text="Agent-Maestro" color={theme.accent} />
         <box marginLeft={1} paddingY={0}>
           <text>
             <span fg={theme.accent}>
@@ -93,13 +93,23 @@ export function MainScreen() {
         {/* Main diff area */}
         {selectedDiff ? (
           <Panel title={selectedDiff.path} flexGrow={1}>
-            <scrollbox focused={focusedPanel === "diff"}>
+            <scrollbox
+              focused={focusedPanel === "diff"}
+              scrollbarOptions={{
+                trackOptions: {
+                  backgroundColor: theme.scrollTrack,
+                  foregroundColor: theme.scrollThumb,
+                },
+              }}
+            >
               <box flexDirection="column">
                 <diff
                   filetype={resolveFiletype(pathToFiletype(selectedDiff.path))}
                   syntaxStyle={syntaxStyle}
                   showLineNumbers={true}
                   diff={selectedDiff.unifiedDiff}
+                  addedSignColor={theme.diffAddedSign}
+                  removedSignColor={theme.diffRemovedSign}
                 />
               </box>
             </scrollbox>
