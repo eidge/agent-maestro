@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RGBA, SyntaxStyle } from "@opentui/core";
+import { pathToFiletype } from "@opentui/core";
 import { Panel } from "../components/ui/Panel";
 import { CommitSelector } from "../components/CommitSelector";
 import { FileSelector } from "../components/FileSelector";
@@ -9,11 +9,6 @@ import { useGitData } from "../hooks/git-data";
 const focusablePanels = ["commits", "files", "diff"] as const;
 
 type FocusablePanel = (typeof focusablePanels)[number];
-
-const diffSyntaxStyle = SyntaxStyle.fromStyles({
-  default: { fg: RGBA.fromHex("#0000FF") },
-  keyword: { fg: RGBA.fromHex("#FF0000") },
-});
 
 export function MainScreen() {
   const {
@@ -98,8 +93,7 @@ export function MainScreen() {
             <scrollbox focused={focusedPanel === "diff"}>
               <box flexDirection="column">
                 <diff
-                  syntaxStyle={diffSyntaxStyle}
-                  filetype="typescript"
+                  filetype={pathToFiletype(selectedDiff.path)}
                   showLineNumbers={true}
                   diff={selectedDiff.unifiedDiff}
                 />
