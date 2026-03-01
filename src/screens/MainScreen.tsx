@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { pathToFiletype } from "@opentui/core";
-import { resolveFiletype } from "../lib/syntax/parsers";
-import { syntaxStyle } from "../lib/syntax/style";
 import { Panel } from "../components/ui/Panel";
 import { CommitSelector } from "../components/CommitSelector";
 import { FileSelector } from "../components/FileSelector";
+import { DiffViewer } from "../components/DiffViewer";
 import { useKeyboardShortcut } from "../hooks/keyboard";
 import { useGitData } from "../hooks/git-data";
 import { theme } from "../lib/themes/default";
@@ -110,28 +108,7 @@ export function MainScreen() {
         {/* Main diff area */}
         <Panel title={selectedDiff?.path} flexGrow={1}>
           {selectedDiff ? (
-            <scrollbox
-              focused={focusedPanel === "diff"}
-              scrollbarOptions={{
-                trackOptions: {
-                  backgroundColor: theme.scrollTrack,
-                  foregroundColor: theme.scrollThumb,
-                },
-              }}
-            >
-              <box flexDirection="column">
-                <diff
-                  filetype={resolveFiletype(pathToFiletype(selectedDiff.path))}
-                  syntaxStyle={syntaxStyle}
-                  showLineNumbers={true}
-                  diff={selectedDiff.unifiedDiff}
-                  addedSignColor={theme.diffAddedSign}
-                  removedSignColor={theme.diffRemovedSign}
-                  addedBg={theme.diffAddedBg}
-                  removedBg={theme.diffRemovedBg}
-                />
-              </box>
-            </scrollbox>
+            <DiffViewer diff={selectedDiff} focused={focusedPanel === "diff"} />
           ) : (
             <box flexGrow={1} justifyContent="center" alignItems="center">
               <text fg={theme.textMuted}>No diffs to display</text>
