@@ -1,7 +1,7 @@
-import { SplashScreen } from "./screens/splash";
+import { SplashScreen } from "./screens/SplashScreen";
 import { useKeyboardShortcutRegistry } from "./hooks/keyboard";
 import { useEffect, useState } from "react";
-import { MainScreen } from "./screens/main";
+import { MainScreen } from "./screens/MainScreen";
 
 type ScreenName = "splash" | "main"
 
