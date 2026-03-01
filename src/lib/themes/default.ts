@@ -1,3 +1,5 @@
+import { colord } from "colord";
+
 // ── Catppuccin Mocha palette ─────────────────────────────────
 const palette = {
   rosewater: "#f5e0dc",
@@ -42,7 +44,7 @@ export const theme = {
   surface: palette.surface0,
 
   // Borders
-  border: palette.surface1,
+  border: palette.surface2,
   borderFocused: palette.blue,
 
   // Accent
@@ -55,11 +57,16 @@ export const theme = {
   modified: palette.yellow,
 
   // Selection (select component)
-  selectBg: palette.surface1,
+  selectBg: palette.surface0,
   selectText: palette.text,
   selectDescriptionColor: palette.overlay1,
+  selectFocusedBg: palette.base,
+  selectFocusedText: palette.text,
+  selectSelectedDescriptionColor: palette.overlay2,
 
   // Diff sign colors
+  diffAddedBg: colord(palette.green).saturate(100).alpha(0.08).toHex(),
+  diffRemovedBg: colord(palette.red).saturate(100).alpha(0.08).toHex(),
   diffAddedSign: palette.green,
   diffRemovedSign: palette.red,
 

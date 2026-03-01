@@ -1,5 +1,5 @@
 import { useKeyboardShortcut } from "../hooks/keyboard";
-import { theme } from "../lib/styles/default";
+import { theme } from "../lib/themes/default";
 
 interface SplashScreenProps {
   onDismiss: () => void;

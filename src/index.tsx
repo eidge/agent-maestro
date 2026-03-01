@@ -2,12 +2,14 @@ import { addDefaultParsers, createCliRenderer } from "@opentui/core";
 import { createRoot } from "@opentui/react";
 import { App } from "./app";
 import { additionalParsers } from "./lib/syntax/parsers";
+import { theme } from "./lib/themes/default";
 
 addDefaultParsers(additionalParsers);
 
 const renderer = await createCliRenderer({
   exitOnCtrlC: true,
   targetFps: 60,
+  backgroundColor: theme.bg,
   consoleOptions: {
     sizePercent: 30,
   },

@@ -7,7 +7,7 @@ import { CommitSelector } from "../components/CommitSelector";
 import { FileSelector } from "../components/FileSelector";
 import { useKeyboardShortcut } from "../hooks/keyboard";
 import { useGitData } from "../hooks/git-data";
-import { theme } from "../lib/styles/default";
+import { theme } from "../lib/themes/default";
 
 const focusablePanels = ["commits", "files", "diff"] as const;
 
@@ -49,7 +49,7 @@ export function MainScreen() {
   }
 
   return (
-    <box flexDirection="column" width="100%" height="100%">
+    <box flexDirection="column" width="100%" height="100%" backgroundColor={theme.bg}>
       {/* Header */}
       <box flexDirection="row" paddingX={1} marginY={1} height={2} alignItems="flex-end">
         <ascii-font font="tiny" text="Agent-Maestro" color={theme.accent} />
@@ -110,6 +110,8 @@ export function MainScreen() {
                   diff={selectedDiff.unifiedDiff}
                   addedSignColor={theme.diffAddedSign}
                   removedSignColor={theme.diffRemovedSign}
+                  addedBg={theme.diffAddedBg}
+                  removedBg={theme.diffRemovedBg}
                 />
               </box>
             </scrollbox>

@@ -1,5 +1,5 @@
 import { SyntaxStyle, type ThemeTokenStyle } from "@opentui/core";
-import { theme } from "../styles/default";
+import { theme } from "../themes/default";
 
 const syntaxTheme: ThemeTokenStyle[] = [
   // ── Keywords & control flow ──────────────────────────────────────

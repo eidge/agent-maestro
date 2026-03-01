@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import type { ChangedFile } from "../lib/git";
-import { theme } from "../lib/styles/default";
+import { theme } from "../lib/themes/default";
 
 export interface FileSelectorProps {
   files: ChangedFile[];
@@ -46,10 +46,13 @@ export function FileSelector({ files, selectedFile, onSelect, focused }: FileSel
       focused={focused}
       showScrollIndicator
       height="100%"
+      textColor={theme.text}
+      descriptionColor={theme.selectDescriptionColor}
       selectedBackgroundColor={theme.selectBg}
       selectedTextColor={theme.selectText}
-      descriptionColor={theme.selectDescriptionColor}
-      textColor={theme.text}
+      selectedDescriptionColor={theme.selectSelectedDescriptionColor}
+      focusedBackgroundColor={theme.selectFocusedBg}
+      focusedTextColor={theme.selectFocusedText}
     />
   );
 }
