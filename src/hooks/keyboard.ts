@@ -1,7 +1,7 @@
 import type { KeyEvent } from "@opentui/core";
 import { useKeyboard } from "@opentui/react";
 import { atom, useAtom } from "jotai";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 type KeyboardShortCutRegistry = Record<string, string>;
 
@@ -35,6 +35,14 @@ export function parseShortcut(shortcut: string): ParsedShortcut {
   };
 }
 
+/**
+ * Parse a shortcut string that may contain a sequence of keys separated by spaces.
+ * Each key in the sequence can include modifiers (e.g. `"g g"`, `"ctrl-k ctrl-s"`).
+ */
+export function parseShortcutSequence(shortcut: string): ParsedShortcut[] {
+  return shortcut.trim().split(/\s+/).map(parseShortcut);
+}
+
 export function matchesShortcut(e: KeyEvent, parsed: ParsedShortcut): boolean {
   return (
     e.name === parsed.key &&
@@ -49,11 +57,28 @@ export function useKeyboardShortcut(
   description: string,
   callback: (e: KeyEvent) => void,
 ) {
-  const parsed = parseShortcut(keyboardShortcut);
+  const sequence = parseShortcutSequence(keyboardShortcut);
+  const positionRef = useRef(0);
 
   useKeyboard((e) => {
-    if (matchesShortcut(e, parsed)) {
-      callback(e);
+    const expected = sequence[positionRef.current]!;
+
+    if (matchesShortcut(e, expected)) {
+      positionRef.current++;
+      if (positionRef.current >= sequence.length) {
+        positionRef.current = 0;
+        callback(e);
+      }
+    } else {
+      // Reset, then check if this key starts the sequence over
+      positionRef.current = 0;
+      if (matchesShortcut(e, sequence[0]!)) {
+        positionRef.current = 1;
+        if (sequence.length === 1) {
+          positionRef.current = 0;
+          callback(e);
+        }
+      }
     }
   });
 

@@ -8,6 +8,7 @@ import {
   useKeyboardShortcut,
   useKeyboardShortcutRegistry,
   parseShortcut,
+  parseShortcutSequence,
 } from "./keyboard";
 
 // ---------------------------------------------------------------------------
@@ -485,5 +486,224 @@ describe("useKeyboardShortcut with composite keys", () => {
     frame = testSetup.captureCharFrame();
     expect(frame).toContain("tab-count:1");
     expect(frame).toContain("alt-tab-count:1");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// parseShortcutSequence
+// ---------------------------------------------------------------------------
+
+describe("parseShortcutSequence", () => {
+  test("parses a single key as a one-element sequence", () => {
+    expect(parseShortcutSequence("x")).toEqual([
+      { key: "x", ctrl: false, shift: false, alt: false },
+    ]);
+  });
+
+  test("parses two keys separated by a space", () => {
+    expect(parseShortcutSequence("g g")).toEqual([
+      { key: "g", ctrl: false, shift: false, alt: false },
+      { key: "g", ctrl: false, shift: false, alt: false },
+    ]);
+  });
+
+  test("parses a sequence with modifiers on each key", () => {
+    expect(parseShortcutSequence("ctrl-k ctrl-s")).toEqual([
+      { key: "k", ctrl: true, shift: false, alt: false },
+      { key: "s", ctrl: true, shift: false, alt: false },
+    ]);
+  });
+
+  test("parses a mixed sequence of plain and modified keys", () => {
+    expect(parseShortcutSequence("g shift-g")).toEqual([
+      { key: "g", ctrl: false, shift: false, alt: false },
+      { key: "g", ctrl: false, shift: true, alt: false },
+    ]);
+  });
+
+  test("handles extra whitespace", () => {
+    expect(parseShortcutSequence("  a   b  ")).toEqual([
+      { key: "a", ctrl: false, shift: false, alt: false },
+      { key: "b", ctrl: false, shift: false, alt: false },
+    ]);
+  });
+
+  test("parses a three-key sequence", () => {
+    expect(parseShortcutSequence("a b c")).toEqual([
+      { key: "a", ctrl: false, shift: false, alt: false },
+      { key: "b", ctrl: false, shift: false, alt: false },
+      { key: "c", ctrl: false, shift: false, alt: false },
+    ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// useKeyboardShortcut with key sequences
+// ---------------------------------------------------------------------------
+
+describe("useKeyboardShortcut with key sequences", () => {
+  let testSetup: TestSetup;
+
+  afterEach(() => {
+    if (testSetup) testSetup.renderer.destroy();
+  });
+
+  test("fires callback after the full sequence is pressed", async () => {
+    testSetup = await mount(
+      <Provider store={createStore()}>
+        <ShortcutCounter shortcut="g g" description="go top" />
+      </Provider>,
+      { width: 40, height: 10 },
+    );
+
+    expect(testSetup.captureCharFrame()).toContain("g g-count:0");
+
+    await pressKeyAndRender(testSetup, "g");
+    expect(testSetup.captureCharFrame()).toContain("g g-count:0");
+
+    await pressKeyAndRender(testSetup, "g");
+    expect(testSetup.captureCharFrame()).toContain("g g-count:1");
+  });
+
+  test("does not fire if the sequence is interrupted by a different key", async () => {
+    testSetup = await mount(
+      <Provider store={createStore()}>
+        <ShortcutCounter shortcut="g g" description="go top" />
+      </Provider>,
+      { width: 40, height: 10 },
+    );
+
+    await pressKeyAndRender(testSetup, "g");
+    await pressKeyAndRender(testSetup, "x");
+    await pressKeyAndRender(testSetup, "g");
+
+    // The interrupting "x" should have reset the sequence, so the final "g"
+    // only starts a new sequence — callback should NOT have fired.
+    expect(testSetup.captureCharFrame()).toContain("g g-count:0");
+  });
+
+  test("restarts the sequence when the first key is pressed after interruption", async () => {
+    testSetup = await mount(
+      <Provider store={createStore()}>
+        <ShortcutCounter shortcut="g g" description="go top" />
+      </Provider>,
+      { width: 40, height: 10 },
+    );
+
+    // g, x (interrupts), g (restarts), g (completes)
+    await pressKeyAndRender(testSetup, "g");
+    await pressKeyAndRender(testSetup, "x");
+    await pressKeyAndRender(testSetup, "g");
+    await pressKeyAndRender(testSetup, "g");
+
+    expect(testSetup.captureCharFrame()).toContain("g g-count:1");
+  });
+
+  test("can fire the sequence multiple times", async () => {
+    testSetup = await mount(
+      <Provider store={createStore()}>
+        <ShortcutCounter shortcut="g g" description="go top" />
+      </Provider>,
+      { width: 40, height: 10 },
+    );
+
+    await pressKeyAndRender(testSetup, "g");
+    await pressKeyAndRender(testSetup, "g");
+    await pressKeyAndRender(testSetup, "g");
+    await pressKeyAndRender(testSetup, "g");
+
+    expect(testSetup.captureCharFrame()).toContain("g g-count:2");
+  });
+
+  test("three-key sequence fires only after all three keys", async () => {
+    testSetup = await mount(
+      <Provider store={createStore()}>
+        <ShortcutCounter shortcut="a b c" description="do abc" />
+      </Provider>,
+      { width: 40, height: 10 },
+    );
+
+    await pressKeyAndRender(testSetup, "a");
+    expect(testSetup.captureCharFrame()).toContain("a b c-count:0");
+
+    await pressKeyAndRender(testSetup, "b");
+    expect(testSetup.captureCharFrame()).toContain("a b c-count:0");
+
+    await pressKeyAndRender(testSetup, "c");
+    expect(testSetup.captureCharFrame()).toContain("a b c-count:1");
+  });
+
+  test("sequence with modifiers works correctly", async () => {
+    testSetup = await mount(
+      <Provider store={createStore()}>
+        <ShortcutCounter shortcut="ctrl-k ctrl-s" description="save" />
+      </Provider>,
+      { width: 40, height: 10, kittyKeyboard: true },
+    );
+
+    await pressKeyAndRender(testSetup, "k", { ctrl: true });
+    expect(testSetup.captureCharFrame()).toContain("ctrl-k ctrl-s-count:0");
+
+    await pressKeyAndRender(testSetup, "s", { ctrl: true });
+    expect(testSetup.captureCharFrame()).toContain("ctrl-k ctrl-s-count:1");
+  });
+
+  test("sequence does not fire if modifier is missing on one key", async () => {
+    testSetup = await mount(
+      <Provider store={createStore()}>
+        <ShortcutCounter shortcut="ctrl-k ctrl-s" description="save" />
+      </Provider>,
+      { width: 40, height: 10, kittyKeyboard: true },
+    );
+
+    await pressKeyAndRender(testSetup, "k", { ctrl: true });
+    // Plain "s" without ctrl should NOT complete the sequence
+    await pressKeyAndRender(testSetup, "s");
+
+    expect(testSetup.captureCharFrame()).toContain("ctrl-k ctrl-s-count:0");
+  });
+
+  test("registers sequence shortcut in the registry", async () => {
+    testSetup = await mount(
+      <Provider store={createStore()}>
+        <box>
+          <ShortcutNoop shortcut="g g" description="go top" />
+          <RegistryDisplay />
+        </box>
+      </Provider>,
+      { width: 80, height: 10 },
+    );
+
+    expect(testSetup.captureCharFrame()).toContain("registry:[g g=go top]");
+  });
+
+  test("single-key shortcuts still work with sequence logic", async () => {
+    testSetup = await mount(
+      <Provider store={createStore()}>
+        <ShortcutCounter shortcut="x" description="do x" />
+      </Provider>,
+      { width: 40, height: 10 },
+    );
+
+    await pressKeyAndRender(testSetup, "x");
+    expect(testSetup.captureCharFrame()).toContain("x-count:1");
+  });
+
+  test("handles g g g as two sequence fires with overlap", async () => {
+    // Pressing g three times: first two complete the sequence, third starts a new one
+    testSetup = await mount(
+      <Provider store={createStore()}>
+        <ShortcutCounter shortcut="g g" description="go top" />
+      </Provider>,
+      { width: 40, height: 10 },
+    );
+
+    await pressKeyAndRender(testSetup, "g");
+    await pressKeyAndRender(testSetup, "g");
+    // Sequence fired once, position reset to 0
+    await pressKeyAndRender(testSetup, "g");
+    // Third "g" only starts a new sequence, does not complete it
+
+    expect(testSetup.captureCharFrame()).toContain("g g-count:1");
   });
 });
