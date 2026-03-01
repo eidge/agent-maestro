@@ -4,7 +4,11 @@ import { Provider, createStore } from "jotai";
 import { act, Component, useState, type ReactNode } from "react";
 import { useKeyboard } from "@opentui/react";
 import type { KeyEvent } from "@opentui/core";
-import { useKeyboardShortcut, useKeyboardShortcutRegistry } from "./keyboard";
+import {
+  useKeyboardShortcut,
+  useKeyboardShortcutRegistry,
+  parseShortcut,
+} from "./keyboard";
 
 // ---------------------------------------------------------------------------
 // Global type declaration
@@ -30,7 +34,10 @@ type TestSetup = Awaited<ReturnType<typeof testRender>>;
  * even `<text>hello</text>` with zero state/effects triggers it). We disable
  * the flag after setup so the unavoidable framework warning is not emitted.
  */
-async function mount(jsx: ReactNode, opts: { width: number; height: number }): Promise<TestSetup> {
+async function mount(
+  jsx: ReactNode,
+  opts: { width: number; height: number; kittyKeyboard?: boolean },
+): Promise<TestSetup> {
   const ts = await testRender(jsx, opts);
   globalThis.IS_REACT_ACT_ENVIRONMENT = false;
   await ts.renderOnce();
@@ -46,7 +53,7 @@ async function mount(jsx: ReactNode, opts: { width: number; height: number }): P
 async function pressKeyAndRender(
   setup: TestSetup,
   key: string,
-  modifiers?: { shift?: boolean; ctrl?: boolean; meta?: boolean },
+  modifiers?: { shift?: boolean; ctrl?: boolean; meta?: boolean; super?: boolean; hyper?: boolean },
 ) {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   await act(async () => {
@@ -54,6 +61,9 @@ async function pressKeyAndRender(
     await setup.renderOnce();
   });
   globalThis.IS_REACT_ACT_ENVIRONMENT = false;
+  // Extra render cycle needed in kitty keyboard mode to flush state updates
+  // triggered by keyboard event callbacks.
+  await setup.renderOnce();
 }
 
 // ---------------------------------------------------------------------------
@@ -94,8 +104,8 @@ function EventCapture({ shortcut, description }: { shortcut: string; description
   if (!event) return <text>event:none</text>;
   return (
     <text>
-      event:{event.name},ctrl:{String(event.ctrl)},shift:{String(event.shift)},type:
-      {event.eventType}
+      event:{event.name},ctrl:{String(event.ctrl)},shift:{String(event.shift)},meta:
+      {String(event.meta)},type:{event.eventType}
     </text>
   );
 }
@@ -283,9 +293,9 @@ describe("useKeyboardShortcut", () => {
   test("passes the full KeyEvent to the callback", async () => {
     testSetup = await mount(
       <Provider store={createStore()}>
-        <EventCapture shortcut="s" description="save" />
+        <EventCapture shortcut="ctrl-s" description="save" />
       </Provider>,
-      { width: 80, height: 10 },
+      { width: 80, height: 10, kittyKeyboard: true },
     );
 
     expect(testSetup.captureCharFrame()).toContain("event:none");
@@ -334,5 +344,146 @@ describe("useKeyboardShortcutRegistry", () => {
     );
 
     expect(testSetup.captureCharFrame()).toContain("registry:[a=action a|b=action b|c=action c]");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// parseShortcut
+// ---------------------------------------------------------------------------
+
+describe("parseShortcut", () => {
+  test("parses a plain key", () => {
+    expect(parseShortcut("x")).toEqual({ key: "x", ctrl: false, shift: false, alt: false });
+  });
+
+  test("parses ctrl modifier", () => {
+    expect(parseShortcut("ctrl-s")).toEqual({ key: "s", ctrl: true, shift: false, alt: false });
+  });
+
+  test("parses shift modifier", () => {
+    expect(parseShortcut("shift-a")).toEqual({ key: "a", ctrl: false, shift: true, alt: false });
+  });
+
+  test("parses alt modifier", () => {
+    expect(parseShortcut("alt-tab")).toEqual({ key: "tab", ctrl: false, shift: false, alt: true });
+  });
+
+  test("parses meta modifier as alt", () => {
+    expect(parseShortcut("meta-k")).toEqual({ key: "k", ctrl: false, shift: false, alt: true });
+  });
+
+  test("parses multiple modifiers", () => {
+    expect(parseShortcut("ctrl-shift-x")).toEqual({
+      key: "x",
+      ctrl: true,
+      shift: true,
+      alt: false,
+    });
+  });
+
+  test("parses all modifiers together", () => {
+    expect(parseShortcut("ctrl-shift-alt-z")).toEqual({
+      key: "z",
+      ctrl: true,
+      shift: true,
+      alt: true,
+    });
+  });
+
+  test("is case-insensitive", () => {
+    expect(parseShortcut("Ctrl-S")).toEqual({ key: "s", ctrl: true, shift: false, alt: false });
+  });
+
+  test("throws when no key name is provided", () => {
+    expect(() => parseShortcut("ctrl-shift")).toThrow("expected exactly one key name, got none");
+  });
+
+  test("throws when multiple key names are provided", () => {
+    expect(() => parseShortcut("a-b")).toThrow('expected exactly one key name, got "a-b"');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Composite key shortcuts (integration)
+// ---------------------------------------------------------------------------
+
+describe("useKeyboardShortcut with composite keys", () => {
+  let testSetup: TestSetup;
+
+  afterEach(() => {
+    if (testSetup) testSetup.renderer.destroy();
+  });
+
+  test("ctrl-s fires only when ctrl is held", async () => {
+    testSetup = await mount(
+      <Provider store={createStore()}>
+        <ShortcutCounter shortcut="ctrl-s" description="save" />
+      </Provider>,
+      { width: 40, height: 10, kittyKeyboard: true },
+    );
+
+    // Plain "s" without ctrl should NOT match
+    await pressKeyAndRender(testSetup, "s");
+    expect(testSetup.captureCharFrame()).toContain("ctrl-s-count:0");
+
+    // "s" with ctrl SHOULD match
+    await pressKeyAndRender(testSetup, "s", { ctrl: true });
+    expect(testSetup.captureCharFrame()).toContain("ctrl-s-count:1");
+  });
+
+  test("alt-tab fires only when meta/alt is held", async () => {
+    testSetup = await mount(
+      <Provider store={createStore()}>
+        <ShortcutCounter shortcut="alt-tab" description="reverse cycle" />
+      </Provider>,
+      { width: 40, height: 10, kittyKeyboard: true },
+    );
+
+    // Plain "tab" without alt should NOT match
+    await pressKeyAndRender(testSetup, "TAB");
+    expect(testSetup.captureCharFrame()).toContain("alt-tab-count:0");
+
+    // "tab" with meta (alt) SHOULD match
+    await pressKeyAndRender(testSetup, "TAB", { meta: true });
+    expect(testSetup.captureCharFrame()).toContain("alt-tab-count:1");
+  });
+
+  test("plain key does not fire when modifier is held", async () => {
+    testSetup = await mount(
+      <Provider store={createStore()}>
+        <ShortcutCounter shortcut="x" description="do x" />
+      </Provider>,
+      { width: 40, height: 10, kittyKeyboard: true },
+    );
+
+    // "x" with ctrl held should NOT match a plain "x" shortcut
+    await pressKeyAndRender(testSetup, "x", { ctrl: true });
+    expect(testSetup.captureCharFrame()).toContain("x-count:0");
+
+    // Plain "x" SHOULD match
+    await pressKeyAndRender(testSetup, "x");
+    expect(testSetup.captureCharFrame()).toContain("x-count:1");
+  });
+
+  test("same key with different modifiers can coexist", async () => {
+    testSetup = await mount(
+      <Provider store={createStore()}>
+        <box>
+          <ShortcutCounter shortcut="tab" description="forward" />
+          <ShortcutCounter shortcut="alt-tab" description="backward" />
+        </box>
+      </Provider>,
+      { width: 80, height: 10, kittyKeyboard: true },
+    );
+
+    await pressKeyAndRender(testSetup, "TAB");
+    let frame = testSetup.captureCharFrame();
+    expect(frame).toContain("tab-count:1");
+    expect(frame).toContain("alt-tab-count:0");
+
+    await pressKeyAndRender(testSetup, "TAB", { meta: true });
+    frame = testSetup.captureCharFrame();
+    expect(frame).toContain("tab-count:1");
+    expect(frame).toContain("alt-tab-count:1");
   });
 });

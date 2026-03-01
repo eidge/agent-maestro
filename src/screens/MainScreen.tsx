@@ -29,11 +29,21 @@ export function MainScreen() {
 
   const [focusedPanel, setFocusedPanel] = useState<FocusablePanel>("commits");
 
-  useKeyboardShortcut("tab", "move between panels", () => {
+  useKeyboardShortcut("tab", "cycle panels forward", () => {
     let index = focusablePanels.indexOf(focusedPanel) + 1;
 
     if (index >= focusablePanels.length) {
       index = 0;
+    }
+
+    setFocusedPanel(focusablePanels[index]!);
+  });
+
+  useKeyboardShortcut("shift-tab", "cycle panels backward", () => {
+    let index = focusablePanels.indexOf(focusedPanel) - 1;
+
+    if (index < 0) {
+      index = focusablePanels.length - 1;
     }
 
     setFocusedPanel(focusablePanels[index]!);
@@ -56,7 +66,7 @@ export function MainScreen() {
       backgroundColor={theme.bg}
       paddingBottom={1}
       paddingX={2}
-      >
+    >
       {/* Header */}
       <box flexDirection="row" paddingX={1} marginY={1} height={2} alignItems="flex-end">
         <ascii-font font="tiny" text="Agent-Maestro" color={theme.accent} />
