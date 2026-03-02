@@ -74,7 +74,7 @@ if (assets.length === 0) {
 console.log(`\nCreating ${draft ? "draft " : ""}release ${tag}…`);
 
 await $`git tag ${tag}`;
-await $`git push upstream ${tag}`;
+await $`git push origin ${tag}`;
 
 const ghFlags = [
   "--title",

@@ -27,24 +27,34 @@ export function MainScreen() {
 
   const [focusedPanel, setFocusedPanel] = useState<FocusablePanel>("commits");
 
-  useKeyboardShortcut("tab", "cycle panels forward", () => {
-    let index = focusablePanels.indexOf(focusedPanel) + 1;
+  const cycleSelectedPanel = (direction: 1 | -1) => {
+    let index = focusablePanels.indexOf(focusedPanel) + direction;
 
     if (index >= focusablePanels.length) {
       index = 0;
-    }
-
-    setFocusedPanel(focusablePanels[index]!);
-  });
-
-  useKeyboardShortcut("shift-tab", "cycle panels backward", () => {
-    let index = focusablePanels.indexOf(focusedPanel) - 1;
-
-    if (index < 0) {
+    } else if (index < 0) {
       index = focusablePanels.length - 1;
     }
 
     setFocusedPanel(focusablePanels[index]!);
+  }
+
+  useKeyboardShortcut("tab", "cycle panels forward", () => {
+    cycleSelectedPanel(1);
+  });
+
+  useKeyboardShortcut("return", "accept selection", () => {
+    if (focusedPanel === "diff") return;
+    cycleSelectedPanel(1);
+  });
+
+  useKeyboardShortcut("shift-tab", "cycle panels backward", () => {
+    cycleSelectedPanel(-1)
+  });
+
+  useKeyboardShortcut("escape", "cancel", () => {
+    if (focusedPanel === "commits") return;
+    cycleSelectedPanel(-1);
   });
 
   const currentFiles =
