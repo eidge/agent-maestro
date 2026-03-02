@@ -15,10 +15,29 @@
  *     resolve a filesystem path for the WASM — which fails inside `/$bunfs`).
  */
 
+// Mark this process as running from a compiled binary.
+(globalThis as Record<string, unknown>).__AGENT_MAESTRO_COMPILED__ = true;
+
 // Embed the pre-bundled tree-sitter parser worker into the compiled binary.
 // @ts-expect-error — Bun-specific import attribute; TS has no declaration for this file.
 import workerPath from "../dist/worker/parser.worker.bundled.js" with { type: "file" };
 (globalThis as Record<string, unknown>).OTUI_TREE_SITTER_WORKER_PATH = workerPath;
+
+// ── CLI subcommands (handled before launching the TUI) ───────────────
+// In a compiled Bun binary, argv is ["bun", "/$bunfs/root/…", ...userArgs].
+const args = process.argv.slice(2);
+
+if (args[0] === "update") {
+  const { performUpdate } = await import("./lib/updater.ts");
+  await performUpdate();
+  process.exit(0);
+}
+
+if (args[0] === "--version" || args[0] === "-v") {
+  const { VERSION } = await import("./lib/version.ts");
+  console.log(`agent-maestro v${VERSION}`);
+  process.exit(0);
+}
 
 // Now load the real application.
 await import("./index.tsx");
