@@ -37,7 +37,7 @@ export function MainScreen() {
     }
 
     setFocusedPanel(focusablePanels[index]!);
-  }
+  };
 
   useKeyboardShortcut("tab", "cycle panels forward", () => {
     cycleSelectedPanel(1);
@@ -49,7 +49,7 @@ export function MainScreen() {
   });
 
   useKeyboardShortcut("shift-tab", "cycle panels backward", () => {
-    cycleSelectedPanel(-1)
+    cycleSelectedPanel(-1);
   });
 
   useKeyboardShortcut("escape", "cancel", () => {

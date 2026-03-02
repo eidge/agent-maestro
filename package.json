@@ -1,12 +1,12 @@
 {
   "name": "agent-maestro",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "module": "src/index.tsx",
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "bun build --compile src/compile-entry.tsx --outfile dist/agent-maestro",
-    "build:all": "bun run scripts/build-all.ts",
+    "build": "bun run scripts/bundle-worker.ts && bun build --compile src/compile-entry.tsx --outfile dist/agent-maestro",
+    "build:all": "bun run scripts/bundle-worker.ts && bun run scripts/build-all.ts",
     "dev": "bun run --watch src/index.tsx",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
