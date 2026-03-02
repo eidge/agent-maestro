@@ -3,8 +3,10 @@ import { Panel } from "../components/ui/Panel";
 import { CommitSelector } from "../components/CommitSelector";
 import { FileSelector } from "../components/FileSelector";
 import { DiffViewer } from "../components/DiffViewer";
+import { UpdateBanner } from "../components/UpdateBanner";
 import { useKeyboardShortcut } from "../hooks/keyboard";
 import { useGitData } from "../hooks/git-data";
+import { useUpdateCheck } from "../hooks/update-check";
 import { theme } from "../lib/themes/default";
 
 const focusablePanels = ["commits", "files", "diff"] as const;
@@ -25,6 +27,7 @@ export function MainScreen() {
     setSelectedFile,
   } = useGitData();
 
+  const { updateAvailable, latestVersion } = useUpdateCheck();
   const [focusedPanel, setFocusedPanel] = useState<FocusablePanel>("commits");
 
   const cycleSelectedPanel = (direction: 1 | -1) => {
@@ -85,6 +88,7 @@ export function MainScreen() {
             </span>
           </text>
         </box>
+        {updateAvailable && latestVersion && <UpdateBanner latestVersion={latestVersion} />}
       </box>
 
       {/* Body: sidebar + main */}
