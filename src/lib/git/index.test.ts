@@ -497,6 +497,64 @@ describe("getFileDiff", () => {
       expect(diffB.unifiedDiff).not.toContain("a.txt");
     });
 
+    test("returns correct unified diff format for a modified tracked file", async () => {
+      const original = Array.from({ length: 10 }, (_, i) => `line ${i + 1}`).join("\n") + "\n";
+      await writeAndAdd("tracked.txt", original);
+      runGitCmd(dir, ["commit", "-m", "add tracked file"]);
+
+      runGitCmd(dir, ["checkout", "-b", "feature/diff-format"]);
+      const modified =
+        [
+          "line 1",
+          "line 2",
+          "line changed",
+          "line 4",
+          "line 5",
+          "line 7",
+          "line 8",
+          "new line",
+          "line 9",
+          "line 10",
+        ].join("\n") + "\n";
+      await writeAndAdd("tracked.txt", modified);
+      runGitCmd(dir, ["commit", "-m", "modify tracked file"]);
+
+      const git = new Git(dir);
+      const commits = await git.getCommitsSinceBase();
+      const files = await git.getChangedFilesForCommit(commits[0]!);
+      const diff = await git.getFileDiff(files[0]!);
+
+      expect(diff.path).toBe("tracked.txt");
+
+      // Strip the dynamic header lines (commit sha, index hashes) and keep
+      // everything from the "diff --git" line onward with placeholders replaced.
+      const normalized = diff.unifiedDiff
+        .replace(/^[0-9a-f]{40}\n/, "")
+        .replace(/^index [0-9a-f]+\.\.[0-9a-f]+ /m, "index HEAD ");
+
+      expect(normalized).toBe(
+        [
+          "diff --git a/tracked.txt b/tracked.txt",
+          "index HEAD 100644",
+          "--- a/tracked.txt",
+          "+++ b/tracked.txt",
+          "@@ -1,10 +1,10 @@",
+          " line 1",
+          " line 2",
+          "-line 3",
+          "+line changed",
+          " line 4",
+          " line 5",
+          "-line 6",
+          " line 7",
+          " line 8",
+          "+new line",
+          " line 9",
+          " line 10",
+        ].join("\n"),
+      );
+    });
+
     test("includes full file context, not just surrounding lines", async () => {
       const lines = Array.from({ length: 20 }, (_, i) => `line ${i + 1}`);
       await writeAndAdd("big.txt", lines.join("\n") + "\n");

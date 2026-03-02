@@ -22,14 +22,6 @@
         "prettier": "^3.8.1",
         "typescript-eslint": "^8.56.1",
       },
-      "optionalDependencies": {
-        "@opentui/core-darwin-arm64": "0.1.84",
-        "@opentui/core-darwin-x64": "^0.1.84",
-        "@opentui/core-linux-arm64": "0.1.84",
-        "@opentui/core-linux-x64": "0.1.84",
-        "@opentui/core-win32-arm64": "0.1.84",
-        "@opentui/core-win32-x64": "0.1.84",
-      },
       "peerDependencies": {
         "typescript": "^5.9.2",
       },

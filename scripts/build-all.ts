@@ -13,17 +13,14 @@ import { join } from "path";
 import { BIN_NAME, ENTRY, OUT_DIR, TARGETS, outName } from "./targets";
 
 // Resolve the @opentui/core version from the installed package.
-const coreVersion: string = (
-  await Bun.file("node_modules/@opentui/core/package.json").json()
-).version;
+const coreVersion: string = (await Bun.file("node_modules/@opentui/core/package.json").json())
+  .version;
 
 // ── Install missing platform packages ────────────────────────────────
 // Package managers respect os/cpu fields and refuse to install packages
 // for other platforms. We bypass this by downloading tarballs with
 // `npm pack` and extracting them directly into node_modules.
-console.log(
-  `Ensuring all @opentui/core native packages are present (v${coreVersion})…`,
-);
+console.log(`Ensuring all @opentui/core native packages are present (v${coreVersion})…`);
 
 for (const target of TARGETS) {
   const pkgName = `@opentui/core-${target.opentui}`;

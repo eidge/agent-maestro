@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { pathToFiletype, type ScrollBoxRenderable } from "@opentui/core";
+import { KeyEvent, pathToFiletype, type ScrollBoxRenderable } from "@opentui/core";
 import { resolveFiletype } from "../lib/syntax/parsers";
 import { syntaxStyle } from "../lib/syntax/style";
 import type { FileDiff } from "../lib/git";
+import { parseUnifiedDiff } from "../lib/git/diff-parser";
 import { theme } from "../lib/themes/default";
 import { useKeyboardShortcut } from "../hooks/keyboard";
 
@@ -11,50 +12,16 @@ export interface DiffViewerProps {
   focused?: boolean;
 }
 
-/**
- * Finds the rendered line indices where each change block (group of
- * consecutive +/- lines) begins.  The file header lines (everything
- * before the first @@ marker) are skipped by the diff renderer, so
- * we mirror that logic here.
- */
-export function getChangeBlockStarts(unifiedDiff: string): number[] {
-  const rawLines = unifiedDiff.split("\n");
-
-  // Skip file header lines (diff --git, index, ---, +++) until the first @@
-  let start = 0;
-  while (start < rawLines.length && !rawLines[start]!.startsWith("@@")) {
-    start++;
-  }
-
-  const starts: number[] = [];
-  let renderedLine = 0;
-  let inChangeBlock = false;
-
-  for (let i = start; i < rawLines.length; i++) {
-    const line = rawLines[i]!;
-    const isChange = line.startsWith("+") || line.startsWith("-");
-
-    if (isChange && !inChangeBlock) {
-      starts.push(renderedLine);
-      inChangeBlock = true;
-    } else if (!isChange) {
-      inChangeBlock = false;
-    }
-
-    renderedLine++;
-  }
-
-  return starts;
+export function getChangeBlockStarts(diff: FileDiff): number[] {
+  const parsed = parseUnifiedDiff(diff);
+  return parsed.chunks.map((chunk) => chunk.start);
 }
 
 export function DiffViewer({ diff, focused }: DiffViewerProps) {
   const scrollRef = useRef<ScrollBoxRenderable>(null);
   const previousPathRef = useRef<string>(diff.path);
 
-  const changeBlockStarts = useMemo(
-    () => getChangeBlockStarts(diff.unifiedDiff),
-    [diff.unifiedDiff],
-  );
+  const changeBlockStarts = useMemo(() => getChangeBlockStarts(diff), [diff]);
 
   useKeyboardShortcut("g g", "scroll to top", () => {
     if (!focused) return;
@@ -67,7 +34,9 @@ export function DiffViewer({ diff, focused }: DiffViewerProps) {
     if (sb) sb.scrollTo(sb.scrollHeight);
   });
 
-  const goToPreviousChangeBlock = useCallback(() => {
+  const goToPreviousChangeBlock = useCallback((e: KeyEvent) => {
+    e.preventDefault()
+
     if (!focused) return;
     const sb = scrollRef.current;
     if (!sb || changeBlockStarts.length === 0) return;
@@ -76,7 +45,7 @@ export function DiffViewer({ diff, focused }: DiffViewerProps) {
     // Find the last block start that is above the current scroll position
     for (let i = changeBlockStarts.length - 1; i >= 0; i--) {
       if (changeBlockStarts[i]! < current) {
-        sb.scrollTo(changeBlockStarts[i]!);
+        sb.scrollTop = changeBlockStarts[i]!;
         return;
       }
     }
@@ -84,7 +53,9 @@ export function DiffViewer({ diff, focused }: DiffViewerProps) {
     sb.scrollTo(0);
   }, [focused, changeBlockStarts]);
 
-  const goToNextChangeBlock = useCallback(() => {
+  const goToNextChangeBlock = useCallback((e: KeyEvent) => {
+    e.preventDefault()
+
     if (!focused) return;
     const sb = scrollRef.current;
     if (!sb || changeBlockStarts.length === 0) return;
@@ -93,7 +64,7 @@ export function DiffViewer({ diff, focused }: DiffViewerProps) {
     // Find the first block start that is below the current scroll position
     for (let i = 0; i < changeBlockStarts.length; i++) {
       if (changeBlockStarts[i]! > current) {
-        sb.scrollTo(changeBlockStarts[i]!);
+        sb.scrollTop = changeBlockStarts[i]!;
         return;
       }
     }
@@ -107,12 +78,12 @@ export function DiffViewer({ diff, focused }: DiffViewerProps) {
   useKeyboardShortcut("shift-j", "next change block", goToNextChangeBlock);
 
   useEffect(() => {
-    if (diff.path === previousPathRef.current) return
-    previousPathRef.current = diff.path
+    if (diff.path === previousPathRef.current) return;
+    previousPathRef.current = diff.path;
     const sb = scrollRef.current;
 
     if (sb) sb.scrollTo(0);
-  }, [diff])
+  }, [diff]);
 
   return (
     <scrollbox
