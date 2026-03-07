@@ -1,0 +1,29 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`NotGitRepoScreen snapshots layout 1`] = `
+"
+
+
+
+    ▄▀█ █▀▀ █▀▀ █▄ █ ▀█▀ ▄▄ █▀▄▀█ ▄▀█ █▀▀ █▀▀ ▀█▀ █▀█ █▀█
+    █▀█ █▄█ ██▄ █ ▀█  █     █ ▀ █ █▀█ ██▄ ▄▄█  █  █▀▄ █▄█
+
+
+             Current directory is not a git repo
+
+                Press enter or escape to exit"
+`;
+
+exports[`NotGitRepoScreen snapshots visual 1`] = `
+"
+
+
+
+[fg:#ffffff]    [fg:#7aa2f7]▄▀█[fg:#ffffff] [fg:#7aa2f7]█▀▀[fg:#ffffff] [fg:#7aa2f7]█▀▀[fg:#ffffff] [fg:#7aa2f7]█▄[fg:#ffffff] [fg:#7aa2f7]█[fg:#ffffff] [fg:#7aa2f7]▀█▀[fg:#ffffff] [fg:#7aa2f7]▄▄[fg:#ffffff] [fg:#7aa2f7]█▀▄▀█[fg:#ffffff] [fg:#7aa2f7]▄▀█[fg:#ffffff] [fg:#7aa2f7]█▀▀[fg:#ffffff] [fg:#7aa2f7]█▀▀[fg:#ffffff] [fg:#7aa2f7]▀█▀[fg:#ffffff] [fg:#7aa2f7]█▀█[fg:#ffffff] [fg:#7aa2f7]█▀█
+[fg:#ffffff]    [fg:#7aa2f7]█▀█[fg:#ffffff] [fg:#7aa2f7]█▄█[fg:#ffffff] [fg:#7aa2f7]██▄[fg:#ffffff] [fg:#7aa2f7]█[fg:#ffffff] [fg:#7aa2f7]▀█[fg:#ffffff]  [fg:#7aa2f7]█[fg:#ffffff]     [fg:#7aa2f7]█[fg:#ffffff] [fg:#7aa2f7]▀[fg:#ffffff] [fg:#7aa2f7]█[fg:#ffffff] [fg:#7aa2f7]█▀█[fg:#ffffff] [fg:#7aa2f7]██▄[fg:#ffffff] [fg:#7aa2f7]▄▄█[fg:#ffffff]  [fg:#7aa2f7]█[fg:#ffffff]  [fg:#7aa2f7]█▀▄[fg:#ffffff] [fg:#7aa2f7]█▄█
+
+
+[fg:#ffffff]             [fg:#f7768e]Current directory is not a git repo
+
+[fg:#ffffff]                [fg:#565f89]Press [fg:#7aa2f7]enter[fg:#565f89] or [fg:#7aa2f7]escape[fg:#565f89] to exit"
+`;

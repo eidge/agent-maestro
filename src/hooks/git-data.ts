@@ -4,6 +4,7 @@ import type { SelectedCommit } from "../components/CommitSelector";
 
 /** The subset of {@link Git} that {@link useGitData} depends on. */
 export interface GitProvider {
+  isGitRepo(): Promise<boolean>;
   getCurrentBranchName(): Promise<string>;
   getCommitsSinceBase(): Promise<CommitInfo[]>;
   getUncommitedFiles(): Promise<ChangedFile[]>;
@@ -47,6 +48,7 @@ export function isSelectedFileValid(selected: ChangedFile | null, files: Changed
 
 export interface GitData {
   loading: boolean;
+  notGitRepo: boolean;
   branchName: string | undefined;
   commits: CommitInfo[];
   uncommitedFiles: ChangedFile[];
@@ -66,6 +68,7 @@ export interface UseGitDataOptions {
 export function useGitData(options?: UseGitDataOptions): GitData {
   const git = useMemo(() => options?.git ?? new Git(), [options?.git]);
   const [loading, setLoading] = useState(true);
+  const [notGitRepo, setNotGitRepo] = useState(false);
   const [branchName, setBranchName] = useState<string>();
   const [commits, setCommits] = useState<CommitInfo[]>([]);
   const [uncommitedFiles, setUncommitedFiles] = useState<ChangedFile[]>([]);
@@ -90,6 +93,13 @@ export function useGitData(options?: UseGitDataOptions): GitData {
     let prevDiff: FileDiff | undefined;
 
     const updateCountsFn = async () => {
+      const isRepo = await git.isGitRepo();
+      if (!isRepo) {
+        setNotGitRepo(true);
+        setLoading(false);
+        return;
+      }
+
       const [branch, newCommits, uncommitted] = await Promise.all([
         git.getCurrentBranchName(),
         git.getCommitsSinceBase(),
@@ -170,6 +180,7 @@ export function useGitData(options?: UseGitDataOptions): GitData {
 
   return {
     loading,
+    notGitRepo,
     branchName,
     commits,
     uncommitedFiles,

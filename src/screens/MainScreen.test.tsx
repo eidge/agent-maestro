@@ -17,6 +17,12 @@ class SnapshotGit {
   committedFilesMap: Map<string, ChangedFile[]>;
   diffs: Map<string, FileDiff>;
 
+  isRepo = true;
+
+  async isGitRepo() {
+    return this.isRepo;
+  }
+
   constructor(data: Partial<GitData>) {
     this.branch = data.branchName ?? "feature/test";
     this.commits = data.commits ?? [];
@@ -189,6 +195,56 @@ describe("MainScreen", () => {
       });
 
       expect(serializeFrameText(testSetup.captureSpans())).toMatchSnapshot();
+    });
+
+    test("layout: not a git repo", async () => {
+      const data = { ...FIXTURE };
+      const git = new SnapshotGit(data);
+      git.isRepo = false;
+
+      testSetup = await testRender(
+        <Provider store={createStore()}>
+          <MainScreen git={git} />
+        </Provider>,
+        { width: 120, height: 35 },
+      );
+
+      globalThis.IS_REACT_ACT_ENVIRONMENT = false;
+      await testSetup.renderOnce();
+      await new Promise((r) => setTimeout(r, 30));
+      globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+      const { act } = await import("react");
+      await act(async () => {
+        await testSetup.renderOnce();
+      });
+      globalThis.IS_REACT_ACT_ENVIRONMENT = false;
+
+      expect(serializeFrameText(testSetup.captureSpans())).toMatchSnapshot();
+    });
+
+    test("visual: not a git repo", async () => {
+      const data = { ...FIXTURE };
+      const git = new SnapshotGit(data);
+      git.isRepo = false;
+
+      testSetup = await testRender(
+        <Provider store={createStore()}>
+          <MainScreen git={git} />
+        </Provider>,
+        { width: 120, height: 35 },
+      );
+
+      globalThis.IS_REACT_ACT_ENVIRONMENT = false;
+      await testSetup.renderOnce();
+      await new Promise((r) => setTimeout(r, 30));
+      globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+      const { act } = await import("react");
+      await act(async () => {
+        await testSetup.renderOnce();
+      });
+      globalThis.IS_REACT_ACT_ENVIRONMENT = false;
+
+      expect(serializeFrameStyled(testSetup.captureSpans())).toMatchSnapshot();
     });
 
     test("layout: with update banner", async () => {

@@ -54,7 +54,11 @@ class MockGit implements GitProvider {
   uncommittedFiles: ChangedFile[] = [];
   committedFilesMap = new Map<string, ChangedFile[]>();
   diffs = new Map<string, FileDiff>();
+  isRepo = true;
 
+  async isGitRepo() {
+    return this.isRepo;
+  }
   async getCurrentBranchName() {
     return this.branch;
   }
@@ -160,6 +164,7 @@ function GitDataDisplay({
   return (
     <box flexDirection="column" width="100%" height="100%">
       <text>loading:{String(data.loading)}</text>
+      <text>notGitRepo:{String(data.notGitRepo)}</text>
       <text>branch:{data.branchName ?? "none"}</text>
       <text>commits:{data.commits.map((c) => c.sha).join(",") || "empty"}</text>
       <text>uncommitted:{data.uncommitedFiles.map((f) => f.path).join(",") || "empty"}</text>
@@ -343,6 +348,20 @@ describe("useGitData", () => {
 
   afterEach(() => {
     if (testSetup) testSetup.renderer.destroy();
+  });
+
+  describe("not a git repo", () => {
+    test("sets notGitRepo when directory is not a git repo", async () => {
+      const mockGit = new MockGit();
+      mockGit.isRepo = false;
+
+      testSetup = await mount(<GitDataDisplay mockGit={mockGit} />);
+      await waitAndRender(testSetup);
+
+      const frame = testSetup.captureCharFrame();
+      expect(frame).toContain("loading:false");
+      expect(frame).toContain("notGitRepo:true");
+    });
   });
 
   describe("initial load", () => {

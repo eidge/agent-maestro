@@ -22,6 +22,15 @@ export class Git {
 
   constructor(private readonly cwd?: string) {}
 
+  async isGitRepo(): Promise<boolean> {
+    try {
+      await this.run(["rev-parse", "--is-inside-work-tree"]);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async getCurrentBranchName(): Promise<string> {
     return this.run(["rev-parse", "--abbrev-ref", "HEAD"]);
   }

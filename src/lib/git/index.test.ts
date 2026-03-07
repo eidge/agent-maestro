@@ -29,6 +29,20 @@ afterEach(async () => {
   await rm(dir, { recursive: true });
 });
 
+describe("isGitRepo", () => {
+  test("returns true inside a git repository", async () => {
+    const git = new Git(dir);
+    expect(await git.isGitRepo()).toBe(true);
+  });
+
+  test("returns false outside a git repository", async () => {
+    const nonGitDir = await mkdtemp(join(tmpdir(), "non-git-"));
+    const git = new Git(nonGitDir);
+    expect(await git.isGitRepo()).toBe(false);
+    await rm(nonGitDir, { recursive: true });
+  });
+});
+
 describe("getCurrentBranchName", () => {
   test("returns the current branch", async () => {
     const git = new Git(dir);

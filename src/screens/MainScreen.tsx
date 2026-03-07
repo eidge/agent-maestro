@@ -6,6 +6,7 @@ import { DiffViewer } from "../components/DiffViewer";
 import { UpdateBanner } from "../components/UpdateBanner";
 import { HelpMenu } from "../components/HelpMenu";
 import { LoadingScreen } from "./LoadingScreen";
+import { NotGitRepoScreen } from "./NotGitRepoScreen";
 import { ShortcutGroup, useKeyboardShortcut } from "../hooks/keyboard";
 import { useGitData, type GitProvider } from "../hooks/git-data";
 import { useUpdateCheck } from "../hooks/update-check";
@@ -24,6 +25,7 @@ export interface MainScreenProps {
 export function MainScreen({ git }: MainScreenProps = {}) {
   const {
     loading,
+    notGitRepo,
     branchName,
     commits,
     uncommitedFiles,
@@ -94,6 +96,10 @@ export function MainScreen({ git }: MainScreenProps = {}) {
 
   if (loading) {
     return <LoadingScreen />;
+  }
+
+  if (notGitRepo) {
+    return <NotGitRepoScreen />;
   }
 
   return (
