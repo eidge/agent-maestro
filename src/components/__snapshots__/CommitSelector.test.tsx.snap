@@ -1,0 +1,30 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`CommitSelector snapshots layout: no commits 1`] = `"no commits"`;
+
+exports[`CommitSelector snapshots layout: uncommitted and commits 1`] = `
+" ▶ ● uncommitted changes
+   3 files
+   feat: add login
+   #abc123
+   fix: typo in readme
+   #789012"
+`;
+
+exports[`CommitSelector snapshots visual: uncommitted and commits 1`] = `
+"[fg:#ffffff bg:#24283b] [fg:#c0caf5 bg:#24283b]▶ ● uncommitted changes
+[fg:#ffffff bg:#24283b]   [fg:#787c99 bg:#24283b]3 files
+[fg:#ffffff bg:#1a1b26] [fg:#c0caf5 bg:#1a1b26]  feat: add login
+[fg:#ffffff bg:#1a1b26]   [fg:#565f89 bg:#1a1b26]#abc123
+[fg:#ffffff bg:#1a1b26] [fg:#c0caf5 bg:#1a1b26]  fix: typo in readme
+[fg:#ffffff bg:#1a1b26]   [fg:#565f89 bg:#1a1b26]#789012"
+`;
+
+exports[`CommitSelector snapshots visual: commit selected (not first item) 1`] = `
+"[fg:#ffffff bg:#1a1b26] [fg:#c0caf5 bg:#1a1b26]  ● uncommitted changes
+[fg:#ffffff bg:#1a1b26]   [fg:#565f89 bg:#1a1b26]3 files
+[fg:#ffffff bg:#1a1b26] [fg:#c0caf5 bg:#1a1b26]  feat: add login
+[fg:#ffffff bg:#1a1b26]   [fg:#565f89 bg:#1a1b26]#abc123
+[fg:#ffffff bg:#24283b] [fg:#c0caf5 bg:#24283b]▶ fix: typo in readme
+[fg:#ffffff bg:#24283b]   [fg:#787c99 bg:#24283b]#789012"
+`;

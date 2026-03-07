@@ -1,0 +1,74 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`HelpMenu snapshots layout: empty registry 1`] = `
+"
+
+
+
+
+
+
+
+
+
+
+
+                    ╭─ Keyboard Shortcuts ─────────────────╮
+                    │                                      │
+                    │                                      │
+                    │  Press ? or Escape to close          │
+                    │                                      │
+                    ╰──────────────────────────────────────╯"
+`;
+
+exports[`HelpMenu snapshots layout: multiple groups with merged shortcuts 1`] = `
+"
+
+
+
+
+
+
+
+                   ╭─ Keyboard Shortcuts ───────────────────╮
+                   │                                        │
+                   │  General                               │
+                   │  ?                     show help       │
+                   │                                        │
+                   │  Navigation                            │
+                   │  Tab                   cycle panels    │
+                   │                                        │
+                   │  Diff                                  │
+                   │  Shift+Up / Shift+k    previous block  │
+                   │  gg                    scroll to top   │
+                   │                                        │
+                   │  Press ? or Escape to close            │
+                   │                                        │
+                   ╰────────────────────────────────────────╯"
+`;
+
+exports[`HelpMenu snapshots visual: multiple groups with merged shortcuts 1`] = `
+"
+
+
+
+
+
+
+
+[fg:#ffffff]                   [fg:#7aa2f7 bg:#1a1b26]╭─ Keyboard Shortcuts ───────────────────╮
+[fg:#ffffff]                   [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                        [fg:#7aa2f7 bg:#1a1b26]│
+[fg:#ffffff]                   [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]General[fg:#ffffff bg:#1a1b26]                               [fg:#7aa2f7 bg:#1a1b26]│
+[fg:#ffffff]                   [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#bb9af7 bg:#1a1b26]?[fg:#ffffff bg:#1a1b26]                     [fg:#c0caf5 bg:#1a1b26]show help[fg:#ffffff bg:#1a1b26]       [fg:#7aa2f7 bg:#1a1b26]│
+[fg:#ffffff]                   [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                        [fg:#7aa2f7 bg:#1a1b26]│
+[fg:#ffffff]                   [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]Navigation[fg:#ffffff bg:#1a1b26]                            [fg:#7aa2f7 bg:#1a1b26]│
+[fg:#ffffff]                   [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#bb9af7 bg:#1a1b26]Tab[fg:#ffffff bg:#1a1b26]                   [fg:#c0caf5 bg:#1a1b26]cycle panels[fg:#ffffff bg:#1a1b26]    [fg:#7aa2f7 bg:#1a1b26]│
+[fg:#ffffff]                   [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                        [fg:#7aa2f7 bg:#1a1b26]│
+[fg:#ffffff]                   [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]Diff[fg:#ffffff bg:#1a1b26]                                  [fg:#7aa2f7 bg:#1a1b26]│
+[fg:#ffffff]                   [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#bb9af7 bg:#1a1b26]Shift+Up / Shift+k[fg:#ffffff bg:#1a1b26]    [fg:#c0caf5 bg:#1a1b26]previous block[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│
+[fg:#ffffff]                   [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#bb9af7 bg:#1a1b26]gg[fg:#ffffff bg:#1a1b26]                    [fg:#c0caf5 bg:#1a1b26]scroll to top[fg:#ffffff bg:#1a1b26]   [fg:#7aa2f7 bg:#1a1b26]│
+[fg:#ffffff]                   [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                        [fg:#7aa2f7 bg:#1a1b26]│
+[fg:#ffffff]                   [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#565f89 bg:#1a1b26]Press [fg:#7aa2f7 bg:#1a1b26]?[fg:#565f89 bg:#1a1b26] or [fg:#7aa2f7 bg:#1a1b26]Escape[fg:#565f89 bg:#1a1b26] to close[fg:#ffffff bg:#1a1b26]            [fg:#7aa2f7 bg:#1a1b26]│
+[fg:#ffffff]                   [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                        [fg:#7aa2f7 bg:#1a1b26]│
+[fg:#ffffff]                   [fg:#7aa2f7 bg:#1a1b26]╰────────────────────────────────────────╯"
+`;

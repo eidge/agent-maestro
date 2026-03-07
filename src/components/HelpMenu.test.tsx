@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Provider, createStore } from "jotai";
 import { ShortcutGroup, useKeyboardShortcut } from "../hooks/keyboard";
 import { HelpMenu } from "./HelpMenu";
+import { serializeFrameStyled, serializeFrameText } from "../lib/test/serialize-frame";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -282,6 +283,72 @@ describe("HelpMenu", () => {
 
       const frame = testSetup.captureCharFrame();
       expect(frame).not.toContain("/");
+    });
+  });
+
+  describe("snapshots", () => {
+    test("layout: empty registry", async () => {
+      testSetup = await mount(
+        <Provider store={createStore()}>
+          <HelpMenu focused />
+        </Provider>,
+      );
+
+      expect(serializeFrameText(testSetup.captureSpans())).toMatchSnapshot();
+    });
+
+    test("layout: multiple groups with merged shortcuts", async () => {
+      testSetup = await mount(
+        <Provider store={createStore()}>
+          <RegisterShortcut shortcut="?" description="show help" group={ShortcutGroup.General} />
+          <RegisterShortcut
+            shortcut="tab"
+            description="cycle panels"
+            group={ShortcutGroup.Navigation}
+          />
+          <RegisterShortcut
+            shortcut="shift-up"
+            description="previous block"
+            group={ShortcutGroup.Diff}
+          />
+          <RegisterShortcut
+            shortcut="shift-k"
+            description="previous block"
+            group={ShortcutGroup.Diff}
+          />
+          <RegisterShortcut shortcut="g g" description="scroll to top" group={ShortcutGroup.Diff} />
+          <HelpMenu focused />
+        </Provider>,
+      );
+
+      expect(serializeFrameText(testSetup.captureSpans())).toMatchSnapshot();
+    });
+
+    test("visual: multiple groups with merged shortcuts", async () => {
+      testSetup = await mount(
+        <Provider store={createStore()}>
+          <RegisterShortcut shortcut="?" description="show help" group={ShortcutGroup.General} />
+          <RegisterShortcut
+            shortcut="tab"
+            description="cycle panels"
+            group={ShortcutGroup.Navigation}
+          />
+          <RegisterShortcut
+            shortcut="shift-up"
+            description="previous block"
+            group={ShortcutGroup.Diff}
+          />
+          <RegisterShortcut
+            shortcut="shift-k"
+            description="previous block"
+            group={ShortcutGroup.Diff}
+          />
+          <RegisterShortcut shortcut="g g" description="scroll to top" group={ShortcutGroup.Diff} />
+          <HelpMenu focused />
+        </Provider>,
+      );
+
+      expect(serializeFrameStyled(testSetup.captureSpans())).toMatchSnapshot();
     });
   });
 });

@@ -1,0 +1,5 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`UpdateBanner snapshots layout: shows version and update command 1`] = `"  update available: v2.5.0 — run agent-maestro update"`;
+
+exports[`UpdateBanner snapshots visual: accent colors on update command 1`] = `"[fg:#ffffff]  [fg:#565f89]update available: [fg:#565f89]v2.5.0[fg:#565f89] — run [fg:#7aa2f7]agent-maestro update"`;

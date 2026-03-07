@@ -3,6 +3,7 @@ import { testRender } from "@opentui/react/test-utils";
 import { act, useState, type ReactNode } from "react";
 import { FileSelector, type FileSelectorProps } from "./FileSelector";
 import type { ChangedFile } from "../lib/git";
+import { serializeFrameStyled, serializeFrameText } from "../lib/test/serialize-frame";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -222,5 +223,64 @@ describe("FileSelector", () => {
     expect(onSelectSpy).toHaveBeenCalledTimes(2);
     const selected: ChangedFile = onSelectSpy.mock.calls[1]![0] as ChangedFile;
     expect(selected.path).toBe("third.ts");
+  });
+
+  describe("snapshots", () => {
+    test("layout: no files", async () => {
+      testSetup = await mount(
+        <Wrapper>
+          <FileSelector files={[]} selectedFile={null} onSelect={() => {}} />
+        </Wrapper>,
+      );
+
+      expect(serializeFrameText(testSetup.captureSpans())).toMatchSnapshot();
+    });
+
+    test("layout: mixed operations", async () => {
+      const files = [
+        makeFile("src/new.ts", "created", 20, 0),
+        makeFile("src/changed.ts", "changed", 5, 3),
+        makeFile("src/gone.ts", "removed", 0, 12),
+      ];
+
+      testSetup = await mount(
+        <Wrapper>
+          <FileSelector files={files} selectedFile={files[0]!} onSelect={() => {}} focused />
+        </Wrapper>,
+      );
+
+      expect(serializeFrameText(testSetup.captureSpans())).toMatchSnapshot();
+    });
+
+    test("visual: mixed operations", async () => {
+      const files = [
+        makeFile("src/new.ts", "created", 20, 0),
+        makeFile("src/changed.ts", "changed", 5, 3),
+        makeFile("src/gone.ts", "removed", 0, 12),
+      ];
+
+      testSetup = await mount(
+        <Wrapper>
+          <FileSelector files={files} selectedFile={files[0]!} onSelect={() => {}} focused />
+        </Wrapper>,
+      );
+
+      expect(serializeFrameStyled(testSetup.captureSpans())).toMatchSnapshot();
+    });
+
+    test("visual: second file focused", async () => {
+      const files = [
+        makeFile("src/new.ts", "created", 20, 0),
+        makeFile("src/changed.ts", "changed", 5, 3),
+      ];
+
+      testSetup = await mount(
+        <Wrapper>
+          <FileSelector files={files} selectedFile={files[1]!} onSelect={() => {}} focused />
+        </Wrapper>,
+      );
+
+      expect(serializeFrameStyled(testSetup.captureSpans())).toMatchSnapshot();
+    });
   });
 });

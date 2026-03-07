@@ -1,0 +1,41 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`Panel snapshots layout: empty panel with title 1`] = `
+"╭─ My Panel ─────────────────╮
+│ hello world                │
+│                            │
+│                            │
+╰────────────────────────────╯"
+`;
+
+exports[`Panel snapshots layout: panel without title 1`] = `
+"╭────────────────────────────╮
+│ content here               │
+│                            │
+│                            │
+╰────────────────────────────╯"
+`;
+
+exports[`Panel snapshots layout: panel with focused child 1`] = `
+"╭─ Focused ──────────────────╮
+│ focused content            │
+│                            │
+│                            │
+╰────────────────────────────╯"
+`;
+
+exports[`Panel snapshots visual: unfocused border color 1`] = `
+"[fg:#3b4261]╭─ Unfocused ────────────────╮
+[fg:#3b4261]│[fg:#ffffff] content                    [fg:#3b4261]│
+[fg:#3b4261]│[fg:#ffffff]                            [fg:#3b4261]│
+[fg:#3b4261]│[fg:#ffffff]                            [fg:#3b4261]│
+[fg:#3b4261]╰────────────────────────────╯"
+`;
+
+exports[`Panel snapshots visual: focused border color 1`] = `
+"[fg:#7aa2f7]╭─ Focused ──────────────────╮
+[fg:#7aa2f7]│[fg:#ffffff] content                    [fg:#7aa2f7]│
+[fg:#7aa2f7]│[fg:#ffffff]                            [fg:#7aa2f7]│
+[fg:#7aa2f7]│[fg:#ffffff]                            [fg:#7aa2f7]│
+[fg:#7aa2f7]╰────────────────────────────╯"
+`;

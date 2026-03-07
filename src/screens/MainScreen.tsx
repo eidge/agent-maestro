@@ -5,8 +5,9 @@ import { FileSelector } from "../components/FileSelector";
 import { DiffViewer } from "../components/DiffViewer";
 import { UpdateBanner } from "../components/UpdateBanner";
 import { HelpMenu } from "../components/HelpMenu";
+import { LoadingScreen } from "./LoadingScreen";
 import { ShortcutGroup, useKeyboardShortcut } from "../hooks/keyboard";
-import { useGitData } from "../hooks/git-data";
+import { useGitData, type GitProvider } from "../hooks/git-data";
 import { useUpdateCheck } from "../hooks/update-check";
 import { theme } from "../lib/themes/default";
 
@@ -15,7 +16,12 @@ const cyclablePanels = ["commits", "files", "diff"] as const;
 type CyclablePanel = (typeof cyclablePanels)[number];
 type FocusablePanel = CyclablePanel | "help";
 
-export function MainScreen() {
+export interface MainScreenProps {
+  /** Optional git provider for testing. When omitted, uses the real Git CLI. */
+  git?: GitProvider;
+}
+
+export function MainScreen({ git }: MainScreenProps = {}) {
   const {
     loading,
     branchName,
@@ -27,7 +33,7 @@ export function MainScreen() {
     selectedDiff,
     setSelectedCommit,
     setSelectedFile,
-  } = useGitData();
+  } = useGitData(git ? { git, pollInterval: 999_999 } : undefined);
 
   const { updateAvailable, latestVersion } = useUpdateCheck();
   const [focusedPanel, setFocusedPanel] = useState<FocusablePanel>("commits");
@@ -87,7 +93,7 @@ export function MainScreen() {
       : committedFiles.filter((f) => f.commitSha === selectedCommit?.commit.sha);
 
   if (loading) {
-    return null;
+    return <LoadingScreen />;
   }
 
   return (

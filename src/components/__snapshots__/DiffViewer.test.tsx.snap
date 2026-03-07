@@ -1,0 +1,73 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`DiffViewer layout snapshots simple change (added + removed lines) 1`] = `
+" 1   function greet(name: string) {
+ 2 -   return "hello " + name;
+ 2 +   return \`hello \${name}\`;
+ 3   }
+ 4
+ 5   export { greet };"
+`;
+
+exports[`DiffViewer layout snapshots addition-only diff 1`] = `
+" 1 + export function add(a: number, b: number) {
+ 2 +   return a + b;
+ 3 + }
+ 4 +"
+`;
+
+exports[`DiffViewer layout snapshots deletion-only diff 1`] = `
+" 1 - export function old() {
+ 2 -   return "deprecated";
+ 3 - }"
+`;
+
+exports[`DiffViewer layout snapshots multi-chunk diff 1`] = `
+"  1   import { foo } from './foo';
+  2 - import { bar } from './bar';
+  2 + import { baz } from './baz';
+  3
+  4   function main() {
+  5     foo();
+  6 -   bar();
+  6 +   baz();
+  7   }
+  8
+  9   export { main };"
+`;
+
+exports[`DiffViewer visual snapshots (with color) simple change has correct colors for added/removed lines 1`] = `
+"[fg:#ffffff] [fg:#888888]1[fg:#ffffff]   function greet(name: string) {
+[fg:#ffffff] [fg:#888888]2[fg:#f7768e] -[fg:#ffffff] [fg:#ffffff bg:#14080a14]  return "hello " + name;
+[fg:#ffffff] [fg:#888888]2[fg:#9ece6a] +[fg:#ffffff] [fg:#ffffff bg:#0c140414]  return \`hello \${name}\`;
+[fg:#ffffff] [fg:#888888]3[fg:#ffffff]   }
+[fg:#ffffff] [fg:#888888]4
+[fg:#ffffff] [fg:#888888]5[fg:#ffffff]   export { greet };"
+`;
+
+exports[`DiffViewer visual snapshots (with color) addition-only diff uses added colors throughout 1`] = `
+"[fg:#ffffff] [fg:#888888]1[fg:#9ece6a] +[fg:#ffffff] [fg:#ffffff bg:#0c140414]export function add(a: number, b: number) {
+[fg:#ffffff] [fg:#888888]2[fg:#9ece6a] +[fg:#ffffff] [fg:#ffffff bg:#0c140414]  return a + b;
+[fg:#ffffff] [fg:#888888]3[fg:#9ece6a] +[fg:#ffffff] [fg:#ffffff bg:#0c140414]}
+[fg:#ffffff] [fg:#888888]4[fg:#9ece6a] +"
+`;
+
+exports[`DiffViewer visual snapshots (with color) deletion-only diff uses removed colors throughout 1`] = `
+"[fg:#ffffff] [fg:#888888]1[fg:#f7768e] -[fg:#ffffff] [fg:#ffffff bg:#14080a14]export function old() {
+[fg:#ffffff] [fg:#888888]2[fg:#f7768e] -[fg:#ffffff] [fg:#ffffff bg:#14080a14]  return "deprecated";
+[fg:#ffffff] [fg:#888888]3[fg:#f7768e] -[fg:#ffffff] [fg:#ffffff bg:#14080a14]}"
+`;
+
+exports[`DiffViewer visual snapshots (with color) multi-chunk diff preserves colors across chunks 1`] = `
+"[fg:#ffffff]  [fg:#888888]1[fg:#ffffff]   import { foo } from './foo';
+[fg:#ffffff]  [fg:#888888]2[fg:#f7768e] -[fg:#ffffff] [fg:#ffffff bg:#14080a14]import { bar } from './bar';
+[fg:#ffffff]  [fg:#888888]2[fg:#9ece6a] +[fg:#ffffff] [fg:#ffffff bg:#0c140414]import { baz } from './baz';
+[fg:#ffffff]  [fg:#888888]3
+[fg:#ffffff]  [fg:#888888]4[fg:#ffffff]   function main() {
+[fg:#ffffff]  [fg:#888888]5[fg:#ffffff]     foo();
+[fg:#ffffff]  [fg:#888888]6[fg:#f7768e] -[fg:#ffffff] [fg:#ffffff bg:#14080a14]  bar();
+[fg:#ffffff]  [fg:#888888]6[fg:#9ece6a] +[fg:#ffffff] [fg:#ffffff bg:#0c140414]  baz();
+[fg:#ffffff]  [fg:#888888]7[fg:#ffffff]   }
+[fg:#ffffff]  [fg:#888888]8
+[fg:#ffffff]  [fg:#888888]9[fg:#ffffff]   export { main };"
+`;

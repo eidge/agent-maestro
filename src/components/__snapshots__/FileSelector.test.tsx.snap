@@ -1,0 +1,28 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`FileSelector snapshots layout: no files 1`] = `"no changed files"`;
+
+exports[`FileSelector snapshots layout: mixed operations 1`] = `
+" ▶ + src/new.ts
+   +20 -0
+   ~ src/changed.ts
+   +5 -3
+   - src/gone.ts
+   +0 -12"
+`;
+
+exports[`FileSelector snapshots visual: mixed operations 1`] = `
+"[fg:#ffffff bg:#24283b] [fg:#c0caf5 bg:#24283b]▶ + src/new.ts
+[fg:#ffffff bg:#24283b]   [fg:#787c99 bg:#24283b]+20 -0
+[fg:#ffffff bg:#1a1b26] [fg:#c0caf5 bg:#1a1b26]  ~ src/changed.ts
+[fg:#ffffff bg:#1a1b26]   [fg:#565f89 bg:#1a1b26]+5 -3
+[fg:#ffffff bg:#1a1b26] [fg:#c0caf5 bg:#1a1b26]  - src/gone.ts
+[fg:#ffffff bg:#1a1b26]   [fg:#565f89 bg:#1a1b26]+0 -12"
+`;
+
+exports[`FileSelector snapshots visual: second file focused 1`] = `
+"[fg:#ffffff bg:#1a1b26] [fg:#c0caf5 bg:#1a1b26]  + src/new.ts
+[fg:#ffffff bg:#1a1b26]   [fg:#565f89 bg:#1a1b26]+20 -0
+[fg:#ffffff bg:#24283b] [fg:#c0caf5 bg:#24283b]▶ ~ src/changed.ts
+[fg:#ffffff bg:#24283b]   [fg:#787c99 bg:#24283b]+5 -3"
+`;

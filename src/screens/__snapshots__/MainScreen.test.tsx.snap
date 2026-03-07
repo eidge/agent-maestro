@@ -1,0 +1,149 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`MainScreen snapshots layout: default state with uncommitted changes 1`] = `
+"
+   ▄▀█ █▀▀ █▀▀ █▄ █ ▀█▀ ▄▄ █▀▄▀█ ▄▀█ █▀▀ █▀▀ ▀█▀ █▀█ █▀█
+   █▀█ █▄█ ██▄ █ ▀█  █     █ ▀ █ █▀█ ██▄ ▄▄█  █  █▀▄ █▄█ feature/test
+
+  ╭─ Commits ──────────────────────────────────────╮  ╭─ src/auth.ts ────────────────────────────────────────────────╮
+  │  ▶ ● uncommitted changes                       │  │  1   export function auth() {                                │
+  │    2 files                                     │  │  2 +   validate("token");                                    │
+  │    feat: add auth                              │  │  3     return true;                                          │
+  │    #abc123                                     │  │  4   }                                                       │
+  │    fix: correct typo                           │  │                                                              │
+  │    #789012                                     │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  ╰────────────────────────────────────────────────╯  │                                                              │
+                                                      │                                                              │
+  ╭─ Changed Files ────────────────────────────────╮  │                                                              │
+  │  ▶ ~ src/auth.ts                               │  │                                                              │
+  │    +12 -3                                      │  │                                                              │
+  │    + src/utils.ts                              │  │                                                              │
+  │    +5 -0                                       │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  ╰────────────────────────────────────────────────╯  ╰──────────────────────────────────────────────────────────────╯
+                                                                                                     Press ? for help"
+`;
+
+exports[`MainScreen snapshots visual: default state with uncommitted changes 1`] = `
+"
+[fg:#ffffff bg:#1a1b26]   [fg:#7aa2f7 bg:#1a1b26]▄▀█[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]█▀▀[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]█▀▀[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]█▄[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]█[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]▀█▀[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]▄▄[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]█▀▄▀█[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]▄▀█[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]█▀▀[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]█▀▀[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]▀█▀[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]█▀█[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]█▀█
+[fg:#ffffff bg:#1a1b26]   [fg:#7aa2f7 bg:#1a1b26]█▀█[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]█▄█[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]██▄[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]█[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]▀█[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]█[fg:#ffffff bg:#1a1b26]     [fg:#7aa2f7 bg:#1a1b26]█[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]▀[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]█[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]█▀█[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]██▄[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]▄▄█[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]█[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]█▀▄[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]█▄█[fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]feature/test
+
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]╭─ Commits ──────────────────────────────────────╮[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]╭─ src/auth.ts ────────────────────────────────────────────────╮
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26] [fg:#ffffff bg:#24283b] [fg:#c0caf5 bg:#24283b]▶ ● uncommitted changes[fg:#ffffff bg:#24283b]                      [fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#888888 bg:#1a1b26]1[fg:#ffffff bg:#1a1b26]   export function auth() {                                [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26] [fg:#ffffff bg:#24283b]   [fg:#787c99 bg:#24283b]2 files[fg:#ffffff bg:#24283b]                                    [fg:#ffffff bg:#1a1b26] [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#888888 bg:#1a1b26]2[fg:#9ece6a bg:#1a1b26] +[fg:#ffffff bg:#1a1b26] [fg:#ffffff bg:#27322714]  validate("token");                                   [fg:#ffffff bg:#1a1b26] [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#c0caf5 bg:#1a1b26]  feat: add auth[fg:#ffffff bg:#1a1b26]                              [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#888888 bg:#1a1b26]3[fg:#ffffff bg:#1a1b26]     return true;                                          [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]    [fg:#565f89 bg:#1a1b26]#abc123[fg:#ffffff bg:#1a1b26]                                     [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#888888 bg:#1a1b26]4[fg:#ffffff bg:#1a1b26]   }                                                       [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#c0caf5 bg:#1a1b26]  fix: correct typo[fg:#ffffff bg:#1a1b26]                           [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]    [fg:#565f89 bg:#1a1b26]#789012[fg:#ffffff bg:#1a1b26]                                     [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                [fg:#7aa2f7 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#7aa2f7 bg:#1a1b26]╰────────────────────────────────────────────────╯[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]                                                      [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]╭─ Changed Files ────────────────────────────────╮[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26] [fg:#ffffff bg:#24283b] [fg:#c0caf5 bg:#24283b]▶ ~ src/auth.ts[fg:#ffffff bg:#24283b]                              [fg:#ffffff bg:#1a1b26] [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26] [fg:#ffffff bg:#24283b]   [fg:#787c99 bg:#24283b]+12 -3[fg:#ffffff bg:#24283b]                                     [fg:#ffffff bg:#1a1b26] [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#c0caf5 bg:#1a1b26]  + src/utils.ts[fg:#ffffff bg:#1a1b26]                              [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]    [fg:#565f89 bg:#1a1b26]+5 -0[fg:#ffffff bg:#1a1b26]                                       [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]│[fg:#ffffff bg:#1a1b26]                                                              [fg:#3b4261 bg:#1a1b26]│
+[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]╰────────────────────────────────────────────────╯[fg:#ffffff bg:#1a1b26]  [fg:#3b4261 bg:#1a1b26]╰──────────────────────────────────────────────────────────────╯
+[fg:#ffffff bg:#1a1b26]                                                                                                     [fg:#565f89 bg:#1a1b26]Press [fg:#7aa2f7 bg:#1a1b26]?[fg:#565f89 bg:#1a1b26] for help"
+`;
+
+exports[`MainScreen snapshots layout: no diffs to display 1`] = `
+"
+   ▄▀█ █▀▀ █▀▀ █▄ █ ▀█▀ ▄▄ █▀▄▀█ ▄▀█ █▀▀ █▀▀ ▀█▀ █▀█ █▀█
+   █▀█ █▄█ ██▄ █ ▀█  █     █ ▀ █ █▀█ ██▄ ▄▄█  █  █▀▄ █▄█ feature/test
+
+  ╭─ Commits ──────────────────────────────────────╮  ╭──────────────────────────────────────────────────────────────╮
+  │ no commits                                     │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                     No diffs to display                      │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  ╰────────────────────────────────────────────────╯  │                                                              │
+                                                      │                                                              │
+  ╭─ Changed Files ────────────────────────────────╮  │                                                              │
+  │ no changed files                               │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  ╰────────────────────────────────────────────────╯  ╰──────────────────────────────────────────────────────────────╯
+                                                                                                     Press ? for help"
+`;
+
+exports[`MainScreen snapshots layout: with update banner 1`] = `
+"
+   ▄▀█ █▀▀ █▀▀ █▄ █ ▀█▀ ▄▄ █▀▄▀█ ▄▀█ █▀▀ █▀▀ ▀█▀ █▀█ █▀█
+   █▀█ █▄█ ██▄ █ ▀█  █     █ ▀ █ █▀█ ██▄ ▄▄█  █  █▀▄ █▄█ feature/test
+
+  ╭─ Commits ──────────────────────────────────────╮  ╭─ src/auth.ts ────────────────────────────────────────────────╮
+  │  ▶ ● uncommitted changes                       │  │  1   export function auth() {                                │
+  │    2 files                                     │  │  2 +   validate("token");                                    │
+  │    feat: add auth                              │  │  3     return true;                                          │
+  │    #abc123                                     │  │  4   }                                                       │
+  │    fix: correct typo                           │  │                                                              │
+  │    #789012                                     │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  ╰────────────────────────────────────────────────╯  │                                                              │
+                                                      │                                                              │
+  ╭─ Changed Files ────────────────────────────────╮  │                                                              │
+  │  ▶ ~ src/auth.ts                               │  │                                                              │
+  │    +12 -3                                      │  │                                                              │
+  │    + src/utils.ts                              │  │                                                              │
+  │    +5 -0                                       │  │                                                              │
+  │                                                │  │                                                              │
+  │                                                │  │                                                              │
+  ╰────────────────────────────────────────────────╯  ╰──────────────────────────────────────────────────────────────╯
+                                                                                                     Press ? for help"
+`;

@@ -3,6 +3,7 @@ import { testRender } from "@opentui/react/test-utils";
 import { act, useState, type ReactNode } from "react";
 import { CommitSelector, type CommitSelectorProps, type SelectedCommit } from "./CommitSelector";
 import type { CommitInfo } from "../lib/git";
+import { serializeFrameStyled, serializeFrameText } from "../lib/test/serialize-frame";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -258,5 +259,85 @@ describe("CommitSelector", () => {
     expect(onSelectSpy).toHaveBeenCalledTimes(1);
     const selection: SelectedCommit = onSelectSpy.mock.calls[0]![0] as SelectedCommit;
     expect(selection.kind).toBe("commit");
+  });
+
+  describe("snapshots", () => {
+    test("layout: no commits", async () => {
+      testSetup = await mount(
+        <Wrapper>
+          <CommitSelector
+            commits={[]}
+            uncommitedFileCount={0}
+            selectedCommit={null}
+            onSelect={() => {}}
+          />
+        </Wrapper>,
+      );
+
+      expect(serializeFrameText(testSetup.captureSpans())).toMatchSnapshot();
+    });
+
+    test("layout: uncommitted and commits", async () => {
+      const commits = [
+        makeCommit("feat: add login", "abc123def456"),
+        makeCommit("fix: typo in readme", "789012fed345"),
+      ];
+
+      testSetup = await mount(
+        <Wrapper>
+          <CommitSelector
+            commits={commits}
+            uncommitedFileCount={3}
+            selectedCommit={{ kind: "uncommitted" }}
+            onSelect={() => {}}
+            focused
+          />
+        </Wrapper>,
+      );
+
+      expect(serializeFrameText(testSetup.captureSpans())).toMatchSnapshot();
+    });
+
+    test("visual: uncommitted and commits", async () => {
+      const commits = [
+        makeCommit("feat: add login", "abc123def456"),
+        makeCommit("fix: typo in readme", "789012fed345"),
+      ];
+
+      testSetup = await mount(
+        <Wrapper>
+          <CommitSelector
+            commits={commits}
+            uncommitedFileCount={3}
+            selectedCommit={{ kind: "uncommitted" }}
+            onSelect={() => {}}
+            focused
+          />
+        </Wrapper>,
+      );
+
+      expect(serializeFrameStyled(testSetup.captureSpans())).toMatchSnapshot();
+    });
+
+    test("visual: commit selected (not first item)", async () => {
+      const commits = [
+        makeCommit("feat: add login", "abc123def456"),
+        makeCommit("fix: typo in readme", "789012fed345"),
+      ];
+
+      testSetup = await mount(
+        <Wrapper>
+          <CommitSelector
+            commits={commits}
+            uncommitedFileCount={3}
+            selectedCommit={{ kind: "commit", commit: commits[1]! }}
+            onSelect={() => {}}
+            focused
+          />
+        </Wrapper>,
+      );
+
+      expect(serializeFrameStyled(testSetup.captureSpans())).toMatchSnapshot();
+    });
   });
 });
