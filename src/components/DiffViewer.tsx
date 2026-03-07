@@ -12,16 +12,16 @@ export interface DiffViewerProps {
   focused?: boolean;
 }
 
-export function getChangeBlockStarts(diff: FileDiff): number[] {
+function getDiffStartScrollPoints(diff: FileDiff): number[] {
   const parsed = parseUnifiedDiff(diff);
-  return parsed.chunks.map((chunk) => chunk.start);
+  return parsed.chunks.map((chunk) => chunk.start - 1); // -1 lines so we have some padding at the top
 }
 
 export function DiffViewer({ diff, focused }: DiffViewerProps) {
   const scrollRef = useRef<ScrollBoxRenderable>(null);
   const previousPathRef = useRef<string>(diff.path);
 
-  const changeBlockStarts = useMemo(() => getChangeBlockStarts(diff), [diff]);
+  const changeBlockStarts = useMemo(() => getDiffStartScrollPoints(diff), [diff]);
 
   useKeyboardShortcut("g g", "scroll to top", () => {
     if (!focused) return;
