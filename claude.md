@@ -19,3 +19,7 @@ After making changes, always run:
 
 - **PascalCase** for files that export React components (`MainScreen.tsx`, `CommitSelector.tsx`, `Panel.tsx`)
 - **kebab-case** for everything else — hooks, libs, utilities (`git-data.ts`, `keyboard.ts`)
+
+# UI Components
+
+Prefer components from `src/components/ui/` over raw OpenTUI primitives when a ui component exists that fits the purpose. For example, use `<Panel>` instead of a raw `<box>` with manual border/padding/focus styling. Check `src/components/ui/` before building new wrappers around OpenTUI primitives.

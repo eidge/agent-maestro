@@ -3,7 +3,18 @@ import { useKeyboard } from "@opentui/react";
 import { atom, useAtom } from "jotai";
 import { useEffect, useRef } from "react";
 
-type KeyboardShortCutRegistry = Record<string, string>;
+export enum ShortcutGroup {
+  General = "General",
+  Navigation = "Navigation",
+  Diff = "Diff",
+}
+
+export interface RegisteredShortcut {
+  description: string;
+  group: ShortcutGroup;
+}
+
+type KeyboardShortCutRegistry = Record<string, RegisteredShortcut>;
 
 const shortcutsAtom = atom<KeyboardShortCutRegistry>({});
 
@@ -55,6 +66,7 @@ export function matchesShortcut(e: KeyEvent, parsed: ParsedShortcut): boolean {
 export function useKeyboardShortcut(
   keyboardShortcut: string,
   description: string,
+  group: ShortcutGroup,
   callback: (e: KeyEvent) => void,
 ) {
   const sequence = parseShortcutSequence(keyboardShortcut);
@@ -89,7 +101,7 @@ export function useKeyboardShortcut(
       if (keyboardShortcut in prev) {
         throw new Error(`Keyboard shortcut (${keyboardShortcut}) already registered.`);
       }
-      return { ...prev, [keyboardShortcut]: description };
+      return { ...prev, [keyboardShortcut]: { description, group } };
     });
 
     return () => {
@@ -99,7 +111,7 @@ export function useKeyboardShortcut(
         return newCopy;
       });
     };
-  }, [description, keyboardShortcut, setShortcuts]);
+  }, [description, group, keyboardShortcut, setShortcuts]);
 }
 
 export function useKeyboardShortcutRegistry(): KeyboardShortCutRegistry {

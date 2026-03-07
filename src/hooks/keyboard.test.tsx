@@ -5,6 +5,7 @@ import { act, Component, useState, type ReactNode } from "react";
 import { useKeyboard } from "@opentui/react";
 import type { KeyEvent } from "@opentui/core";
 import {
+  ShortcutGroup,
   useKeyboardShortcut,
   useKeyboardShortcutRegistry,
   parseShortcut,
@@ -74,7 +75,7 @@ async function pressKeyAndRender(
 /** Renders `<shortcut>-count:<N>` where N increments on each matching keypress. */
 function ShortcutCounter({ shortcut, description }: { shortcut: string; description: string }) {
   const [count, setCount] = useState(0);
-  useKeyboardShortcut(shortcut, description, () => setCount((c) => c + 1));
+  useKeyboardShortcut(shortcut, description, ShortcutGroup.General, () => setCount((c) => c + 1));
   return (
     <text>
       {shortcut}-count:{count}
@@ -87,21 +88,21 @@ function RegistryDisplay() {
   const registry = useKeyboardShortcutRegistry();
   const entries = Object.entries(registry)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([k, v]) => `${k}=${v}`)
+    .map(([k, v]) => `${k}=${v.description}`)
     .join("|");
   return <text>registry:[{entries}]</text>;
 }
 
 /** Registers a shortcut with a no-op callback; renders nothing visible. */
 function ShortcutNoop({ shortcut, description }: { shortcut: string; description: string }) {
-  useKeyboardShortcut(shortcut, description, () => {});
+  useKeyboardShortcut(shortcut, description, ShortcutGroup.General, () => {});
   return <text />;
 }
 
 /** Captures the last KeyEvent received for inspection. */
 function EventCapture({ shortcut, description }: { shortcut: string; description: string }) {
   const [event, setEvent] = useState<KeyEvent | null>(null);
-  useKeyboardShortcut(shortcut, description, (e) => setEvent(e));
+  useKeyboardShortcut(shortcut, description, ShortcutGroup.General, (e) => setEvent(e));
   if (!event) return <text>event:none</text>;
   return (
     <text>

@@ -5,7 +5,7 @@ import { syntaxStyle } from "../lib/syntax/style";
 import type { FileDiff } from "../lib/git";
 import { parseUnifiedDiff } from "../lib/git/diff-parser";
 import { theme } from "../lib/themes/default";
-import { useKeyboardShortcut } from "../hooks/keyboard";
+import { ShortcutGroup, useKeyboardShortcut } from "../hooks/keyboard";
 
 export interface DiffViewerProps {
   diff: FileDiff;
@@ -23,12 +23,12 @@ export function DiffViewer({ diff, focused }: DiffViewerProps) {
 
   const changeBlockStarts = useMemo(() => getDiffStartScrollPoints(diff), [diff]);
 
-  useKeyboardShortcut("g g", "scroll to top", () => {
+  useKeyboardShortcut("g g", "scroll to top", ShortcutGroup.Diff, () => {
     if (!focused) return;
     scrollRef.current?.scrollTo(0);
   });
 
-  useKeyboardShortcut("shift-g", "scroll to bottom", () => {
+  useKeyboardShortcut("shift-g", "scroll to bottom", ShortcutGroup.Diff, () => {
     if (!focused) return;
     const sb = scrollRef.current;
     if (sb) sb.scrollTo(sb.scrollHeight);
@@ -78,10 +78,20 @@ export function DiffViewer({ diff, focused }: DiffViewerProps) {
     [focused, changeBlockStarts],
   );
 
-  useKeyboardShortcut("shift-up", "previous change block", goToPreviousChangeBlock);
-  useKeyboardShortcut("shift-k", "previous change block", goToPreviousChangeBlock);
-  useKeyboardShortcut("shift-down", "next change block", goToNextChangeBlock);
-  useKeyboardShortcut("shift-j", "next change block", goToNextChangeBlock);
+  useKeyboardShortcut(
+    "shift-up",
+    "previous change block",
+    ShortcutGroup.Diff,
+    goToPreviousChangeBlock,
+  );
+  useKeyboardShortcut(
+    "shift-k",
+    "previous change block",
+    ShortcutGroup.Diff,
+    goToPreviousChangeBlock,
+  );
+  useKeyboardShortcut("shift-down", "next change block", ShortcutGroup.Diff, goToNextChangeBlock);
+  useKeyboardShortcut("shift-j", "next change block", ShortcutGroup.Diff, goToNextChangeBlock);
 
   useEffect(() => {
     if (diff.path === previousPathRef.current) return;

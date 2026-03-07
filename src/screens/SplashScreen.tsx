@@ -1,4 +1,4 @@
-import { useKeyboardShortcut } from "../hooks/keyboard";
+import { ShortcutGroup, useKeyboardShortcut } from "../hooks/keyboard";
 import { theme } from "../lib/themes/default";
 
 interface SplashScreenProps {
@@ -6,7 +6,7 @@ interface SplashScreenProps {
 }
 
 export function SplashScreen(props: SplashScreenProps) {
-  useKeyboardShortcut("return", "quit", props.onDismiss);
+  useKeyboardShortcut("return", "quit", ShortcutGroup.General, props.onDismiss);
 
   return (
     <box alignItems="center" justifyContent="center" flexGrow={1}>

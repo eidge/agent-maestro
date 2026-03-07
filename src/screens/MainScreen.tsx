@@ -1,17 +1,19 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Panel } from "../components/ui/Panel";
 import { CommitSelector } from "../components/CommitSelector";
 import { FileSelector } from "../components/FileSelector";
 import { DiffViewer } from "../components/DiffViewer";
 import { UpdateBanner } from "../components/UpdateBanner";
-import { useKeyboardShortcut } from "../hooks/keyboard";
+import { HelpMenu } from "../components/HelpMenu";
+import { ShortcutGroup, useKeyboardShortcut } from "../hooks/keyboard";
 import { useGitData } from "../hooks/git-data";
 import { useUpdateCheck } from "../hooks/update-check";
 import { theme } from "../lib/themes/default";
 
-const focusablePanels = ["commits", "files", "diff"] as const;
+const cyclablePanels = ["commits", "files", "diff"] as const;
 
-type FocusablePanel = (typeof focusablePanels)[number];
+type CyclablePanel = (typeof cyclablePanels)[number];
+type FocusablePanel = CyclablePanel | "help";
 
 export function MainScreen() {
   const {
@@ -29,33 +31,52 @@ export function MainScreen() {
 
   const { updateAvailable, latestVersion } = useUpdateCheck();
   const [focusedPanel, setFocusedPanel] = useState<FocusablePanel>("commits");
+  const previousPanelRef = useRef<CyclablePanel>("commits");
+
+  const cyclablePanel = focusedPanel === "help" ? previousPanelRef.current : focusedPanel;
 
   const cycleSelectedPanel = (direction: 1 | -1) => {
-    let index = focusablePanels.indexOf(focusedPanel) + direction;
+    let index = cyclablePanels.indexOf(cyclablePanel) + direction;
 
-    if (index >= focusablePanels.length) {
+    if (index >= cyclablePanels.length) {
       index = 0;
     } else if (index < 0) {
-      index = focusablePanels.length - 1;
+      index = cyclablePanels.length - 1;
     }
 
-    setFocusedPanel(focusablePanels[index]!);
+    setFocusedPanel(cyclablePanels[index]!);
   };
 
-  useKeyboardShortcut("tab", "cycle panels forward", () => {
+  useKeyboardShortcut("?", "show help", ShortcutGroup.General, () => {
+    if (focusedPanel === "help") {
+      setFocusedPanel(previousPanelRef.current);
+    } else {
+      previousPanelRef.current = cyclablePanel;
+      setFocusedPanel("help");
+    }
+  });
+
+  useKeyboardShortcut("tab", "cycle panels forward", ShortcutGroup.Navigation, () => {
+    if (focusedPanel === "help") return;
     cycleSelectedPanel(1);
   });
 
-  useKeyboardShortcut("return", "accept selection", () => {
+  useKeyboardShortcut("return", "accept selection", ShortcutGroup.Navigation, () => {
+    if (focusedPanel === "help") return;
     if (focusedPanel === "diff") return;
     cycleSelectedPanel(1);
   });
 
-  useKeyboardShortcut("shift-tab", "cycle panels backward", () => {
+  useKeyboardShortcut("shift-tab", "cycle panels backward", ShortcutGroup.Navigation, () => {
+    if (focusedPanel === "help") return;
     cycleSelectedPanel(-1);
   });
 
-  useKeyboardShortcut("escape", "cancel", () => {
+  useKeyboardShortcut("escape", "cancel / close help", ShortcutGroup.Navigation, () => {
+    if (focusedPanel === "help") {
+      setFocusedPanel(previousPanelRef.current);
+      return;
+    }
     if (focusedPanel === "commits") return;
     cycleSelectedPanel(-1);
   });
@@ -77,6 +98,7 @@ export function MainScreen() {
       backgroundColor={theme.bg}
       paddingBottom={1}
       paddingX={2}
+      position="relative"
     >
       {/* Header */}
       <box flexDirection="row" paddingX={1} marginY={1} height={2} alignItems="flex-end">
@@ -130,6 +152,16 @@ export function MainScreen() {
           )}
         </Panel>
       </box>
+
+      {/* Footer */}
+      <box height={1} paddingX={1} flexDirection="row" justifyContent="flex-end">
+        <text fg={theme.textMuted}>
+          Press <span fg={theme.accent}>?</span> for help
+        </text>
+      </box>
+
+      {/* Help menu overlay */}
+      {focusedPanel === "help" && <HelpMenu focused />}
     </box>
   );
 }
