@@ -6,9 +6,13 @@ export interface DiffChunk {
   contents: string;
 }
 
+export type DiffLineType = "added" | "removed" | "context";
+
 export interface ParsedDiff {
   contents: string;
   chunks: DiffChunk[];
+  lineCount: number;
+  lineTypes: DiffLineType[];
 }
 
 export function parseUnifiedDiff(diff: FileDiff): ParsedDiff {
@@ -56,5 +60,11 @@ export function parseUnifiedDiff(diff: FileDiff): ParsedDiff {
     });
   }
 
-  return { contents, chunks };
+  const lineTypes: DiffLineType[] = bodyLines.map((line) => {
+    if (line.startsWith("+")) return "added";
+    if (line.startsWith("-")) return "removed";
+    return "context";
+  });
+
+  return { contents, chunks, lineCount: bodyLines.length, lineTypes };
 }

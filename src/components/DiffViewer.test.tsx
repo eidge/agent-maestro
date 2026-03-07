@@ -1,9 +1,12 @@
 import { describe, test, expect, afterEach } from "bun:test";
+import { act } from "react";
 import { testRender } from "@opentui/react/test-utils";
 import type { ReactNode } from "react";
+import { rgbToHex } from "@opentui/core";
 import { DiffViewer } from "./DiffViewer";
 import type { FileDiff } from "../lib/git";
 import { serializeFrameStyled, serializeFrameText } from "../lib/test/serialize-frame";
+import { theme } from "../lib/themes/default";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -16,6 +19,40 @@ async function mount(jsx: ReactNode, opts = { width: 80, height: 24 }): Promise<
   globalThis.IS_REACT_ACT_ENVIRONMENT = false;
   await ts.renderOnce();
   return ts;
+}
+
+async function pressKeyAndRender(setup: TestSetup, key: string) {
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  await act(async () => {
+    setup.mockInput.pressKey(key);
+    await setup.renderOnce();
+  });
+  // Extra render to flush effects (setLineColor etc.)
+  await act(async () => {
+    await setup.renderOnce();
+  });
+  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
+}
+
+/**
+ * Returns the 0-indexed line numbers (from rendered frame) whose spans
+ * contain the highlight background color.
+ */
+function getHighlightedLines(setup: TestSetup): number[] {
+  const frame = setup.captureSpans();
+  const highlightHex = theme.diffHighlightLine.toLowerCase();
+  const result: number[] = [];
+
+  for (let i = 0; i < frame.lines.length; i++) {
+    const line = frame.lines[i]!;
+    const hasHighlight = line.spans.some((span) => {
+      const bg = span.bg;
+      if (bg.a === 0) return false;
+      return (rgbToHex(bg) as string).toLowerCase() === highlightHex;
+    });
+    if (hasHighlight) result.push(i);
+  }
+  return result;
 }
 
 function Wrapper({ children }: { children: ReactNode }) {
@@ -260,6 +297,128 @@ describe("DiffViewer", () => {
         line.spans.filter((s) => s.text.includes("export function old")),
       );
       expect(removedSpans.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("line navigation", () => {
+    test("first line is highlighted on mount", async () => {
+      testSetup = await mount(
+        <Wrapper>
+          <DiffViewer diff={SIMPLE_DIFF} focused />
+        </Wrapper>,
+      );
+
+      const highlighted = getHighlightedLines(testSetup);
+      expect(highlighted).toEqual([0]);
+    });
+
+    test("pressing down moves highlight to next line", async () => {
+      testSetup = await mount(
+        <Wrapper>
+          <DiffViewer diff={SIMPLE_DIFF} focused />
+        </Wrapper>,
+      );
+
+      await pressKeyAndRender(testSetup, "ARROW_DOWN");
+
+      const highlighted = getHighlightedLines(testSetup);
+      expect(highlighted).toEqual([1]);
+    });
+
+    test("pressing j moves highlight to next line", async () => {
+      testSetup = await mount(
+        <Wrapper>
+          <DiffViewer diff={SIMPLE_DIFF} focused />
+        </Wrapper>,
+      );
+
+      await pressKeyAndRender(testSetup, "j");
+
+      const highlighted = getHighlightedLines(testSetup);
+      expect(highlighted).toEqual([1]);
+    });
+
+    test("pressing up from second line moves highlight back to first", async () => {
+      testSetup = await mount(
+        <Wrapper>
+          <DiffViewer diff={SIMPLE_DIFF} focused />
+        </Wrapper>,
+      );
+
+      await pressKeyAndRender(testSetup, "ARROW_DOWN");
+      await pressKeyAndRender(testSetup, "ARROW_UP");
+
+      const highlighted = getHighlightedLines(testSetup);
+      expect(highlighted).toEqual([0]);
+    });
+
+    test("pressing k from second line moves highlight back to first", async () => {
+      testSetup = await mount(
+        <Wrapper>
+          <DiffViewer diff={SIMPLE_DIFF} focused />
+        </Wrapper>,
+      );
+
+      await pressKeyAndRender(testSetup, "j");
+      await pressKeyAndRender(testSetup, "k");
+
+      const highlighted = getHighlightedLines(testSetup);
+      expect(highlighted).toEqual([0]);
+    });
+
+    test("pressing up at first line stays on first line", async () => {
+      testSetup = await mount(
+        <Wrapper>
+          <DiffViewer diff={SIMPLE_DIFF} focused />
+        </Wrapper>,
+      );
+
+      await pressKeyAndRender(testSetup, "ARROW_UP");
+
+      const highlighted = getHighlightedLines(testSetup);
+      expect(highlighted).toEqual([0]);
+    });
+
+    test("navigating down multiple times advances through lines", async () => {
+      testSetup = await mount(
+        <Wrapper>
+          <DiffViewer diff={SIMPLE_DIFF} focused />
+        </Wrapper>,
+      );
+
+      await pressKeyAndRender(testSetup, "j");
+      await pressKeyAndRender(testSetup, "j");
+      await pressKeyAndRender(testSetup, "j");
+
+      const highlighted = getHighlightedLines(testSetup);
+      expect(highlighted).toEqual([3]);
+    });
+
+    test("does not navigate when not focused", async () => {
+      testSetup = await mount(
+        <Wrapper>
+          <DiffViewer diff={SIMPLE_DIFF} focused={false} />
+        </Wrapper>,
+      );
+
+      await pressKeyAndRender(testSetup, "j");
+      await pressKeyAndRender(testSetup, "j");
+
+      // Should still be on line 0 since the component is not focused
+      const highlighted = getHighlightedLines(testSetup);
+      expect(highlighted).toEqual([0]);
+    });
+
+    test("visual: highlight moves after down press", async () => {
+      testSetup = await mount(
+        <Wrapper>
+          <DiffViewer diff={SIMPLE_DIFF} focused />
+        </Wrapper>,
+      );
+
+      await pressKeyAndRender(testSetup, "j");
+
+      expect(serializeFrameStyled(testSetup.captureSpans())).toMatchSnapshot();
     });
   });
 });

@@ -64,6 +64,7 @@ export const theme = {
   diffRemovedBg: colord(palette.red).saturate(100).alpha(0.08).toHex(),
   diffAddedSign: palette.green,
   diffRemovedSign: palette.red,
+  diffHighlightLine: palette.surface1,
 
   // Scrollbar
   scrollTrack: palette.surface0,

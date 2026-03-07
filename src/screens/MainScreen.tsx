@@ -156,7 +156,11 @@ export function MainScreen({ git }: MainScreenProps = {}) {
         {/* Main diff area */}
         <Panel title={selectedDiff?.path} flexGrow={1}>
           {selectedDiff ? (
-            <DiffViewer diff={selectedDiff} focused={focusedPanel === "diff"} />
+            <DiffViewer
+              key={selectedDiff.path}
+              diff={selectedDiff}
+              focused={focusedPanel === "diff"}
+            />
           ) : (
             <box flexGrow={1} justifyContent="center" alignItems="center">
               <text fg={theme.textMuted}>No diffs to display</text>
