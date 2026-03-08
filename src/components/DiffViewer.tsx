@@ -11,32 +11,50 @@ import type { FileDiff } from "../lib/git";
 import { type DiffLineType, parseUnifiedDiff } from "../lib/git/diff-parser";
 import { theme } from "../lib/themes/default";
 import { ShortcutGroup, useKeyboardShortcut } from "../hooks/keyboard";
+import type { DiffComment } from "../hooks/diff-comments";
 
 /**
- * Returns the original diff line color config for a given line type.
- * This must match what the <diff> component sets internally so we can
- * restore colors after clearing a highlight.
+ * Returns the diff line color config for a given line type, optionally
+ * tinted to indicate a comment is present on that line.
  */
-function getDiffLineColor(lineType: DiffLineType): {
+function getDiffLineColor(
+  lineType: DiffLineType,
+  comment?: DiffComment,
+): {
   gutter: string;
   content: string;
 } {
-  switch (lineType) {
-    case "added":
-      return { gutter: "transparent", content: theme.diffAddedBg };
-    case "removed":
-      return { gutter: "transparent", content: theme.diffRemovedBg };
-    case "context":
-      return { gutter: "transparent", content: "transparent" };
+  const base = (() => {
+    switch (lineType) {
+      case "added":
+        return { gutter: "transparent", content: theme.diffAddedBg };
+      case "removed":
+        return { gutter: "transparent", content: theme.diffRemovedBg };
+      case "context":
+        return { gutter: "transparent", content: "transparent" };
+    }
+  })();
+
+  if (comment) {
+    return {
+      gutter: comment.stale ? theme.commentStaleGutter : theme.commentGutter,
+      content: base.content,
+    };
   }
+
+  return base;
 }
 
 export interface DiffViewerProps {
   diff: FileDiff;
   focused?: boolean;
+  /** Map from diff line index → comment. Lines with entries get a visual indicator. */
+  commentedLines?: Map<number, DiffComment>;
+  /** Called whenever the highlighted line changes. */
+  onLineSelected?: (lineIndex: number) => void;
 }
 
-export function DiffViewer({ diff, focused }: DiffViewerProps) {
+export function DiffViewer({ diff, focused, commentedLines, onLineSelected }: DiffViewerProps) {
   const scrollRef = useRef<ScrollBoxRenderable>(null);
   const diffRef = useRef<DiffRenderable>(null);
   const [currentLine, setCurrentLine] = useState(0);
@@ -47,6 +65,37 @@ export function DiffViewer({ diff, focused }: DiffViewerProps) {
   const lineTypes = parsed.lineTypes;
   const prevLineRef = useRef<number | null>(null);
 
+  // Notify parent whenever the current line changes
+  useEffect(() => {
+    onLineSelected?.(currentLine);
+  }, [currentLine, onLineSelected]);
+
+  // Apply comment gutter indicators whenever commentedLines changes.
+  // We repaint ALL lines so that removed comments also get cleared.
+  const prevCommentedLinesRef = useRef<Map<number, DiffComment> | undefined>(undefined);
+
+  useEffect(() => {
+    const d = diffRef.current;
+    if (!d || lineCount === 0) return;
+
+    const prev = prevCommentedLinesRef.current;
+    const next = commentedLines;
+    prevCommentedLinesRef.current = next;
+
+    // Collect all line indices that need repainting (union of old + new)
+    const dirtyLines = new Set<number>();
+    if (prev) for (const idx of prev.keys()) dirtyLines.add(idx);
+    if (next) for (const idx of next.keys()) dirtyLines.add(idx);
+
+    for (const idx of dirtyLines) {
+      // Skip the currently highlighted line — the highlight effect manages it
+      if (idx === currentLine) continue;
+
+      const comment = next?.get(idx);
+      d.setLineColor(idx, getDiffLineColor(lineTypes[idx]!, comment));
+    }
+  }, [commentedLines, lineCount, lineTypes, currentLine]);
+
   // Apply line highlight whenever currentLine changes.
   // Only touch the two affected lines (old + new) so the diff's own
   // added/removed backgrounds on all other lines stay intact.
@@ -56,9 +105,10 @@ export function DiffViewer({ diff, focused }: DiffViewerProps) {
 
     const prev = prevLineRef.current;
 
-    // Restore the previous line's original diff color
+    // Restore the previous line's original diff color (with comment indicator if present)
     if (prev !== null && prev !== currentLine) {
-      d.setLineColor(prev, getDiffLineColor(lineTypes[prev]!));
+      const comment = commentedLines?.get(prev);
+      d.setLineColor(prev, getDiffLineColor(lineTypes[prev]!, comment));
     }
 
     // Highlight the current line
@@ -68,7 +118,7 @@ export function DiffViewer({ diff, focused }: DiffViewerProps) {
     });
 
     prevLineRef.current = currentLine;
-  }, [currentLine, lineCount, lineTypes]);
+  }, [currentLine, lineCount, lineTypes, commentedLines]);
 
   // Scroll to keep the current line visible
   useEffect(() => {
@@ -94,6 +144,7 @@ export function DiffViewer({ diff, focused }: DiffViewerProps) {
   );
 
   useKeyboardShortcut("up", "previous line", ShortcutGroup.Diff, (e) => {
+    if (!focused) return;
     e.preventDefault();
     moveLine(-1);
   });
@@ -105,6 +156,7 @@ export function DiffViewer({ diff, focused }: DiffViewerProps) {
   });
 
   useKeyboardShortcut("down", "next line", ShortcutGroup.Diff, (e) => {
+    if (!focused) return;
     e.preventDefault();
     moveLine(1);
   });

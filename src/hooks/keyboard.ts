@@ -7,6 +7,7 @@ export enum ShortcutGroup {
   General = "General",
   Navigation = "Navigation",
   Diff = "Diff",
+  Comment = "Comment",
 }
 
 export interface RegisteredShortcut {

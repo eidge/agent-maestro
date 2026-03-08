@@ -80,3 +80,12 @@ exports[`DiffViewer line navigation visual: highlight moves after down press 1`]
 [fg:#ffffff] [fg:#888888]4
 [fg:#ffffff] [fg:#888888]5[fg:#ffffff]   export { greet };"
 `;
+
+exports[`DiffViewer comments visual: comment indicator snapshot 1`] = `
+"[fg:#ffffff bg:#292e42] [fg:#888888 bg:#292e42]1[fg:#ffffff bg:#292e42]   function greet(name: string) {
+[fg:#ffffff] [fg:#888888]2[fg:#f7768e] -[fg:#ffffff] [fg:#ffffff bg:#14080a14]  return "hello " + name;
+[fg:#ffffff bg:#2a3a5e] [fg:#888888 bg:#2a3a5e]2[fg:#9ece6a bg:#2a3a5e] +[fg:#ffffff bg:#2a3a5e] [fg:#ffffff bg:#0c140414]  return \`hello \${name}\`;
+[fg:#ffffff] [fg:#888888]3[fg:#ffffff]   }
+[fg:#ffffff bg:#3d3228] [fg:#888888 bg:#3d3228]4
+[fg:#ffffff] [fg:#888888]5[fg:#ffffff]   export { greet };"
+`;

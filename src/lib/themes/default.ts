@@ -66,6 +66,10 @@ export const theme = {
   diffRemovedSign: palette.red,
   diffHighlightLine: palette.surface1,
 
+  // Comments (opaque tints blended against base)
+  commentGutter: "#2a3a5e",
+  commentStaleGutter: "#3d3228",
+
   // Scrollbar
   scrollTrack: palette.surface0,
   scrollThumb: palette.surface2,

@@ -1,0 +1,68 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`CommentModal snapshots layout: new comment 1`] = `
+"
+
+
+
+
+╭─ Add Comment ────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│  Write a comment...                                                          │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│  Enter save · Shift+Enter new line · Escape cancel                           │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯"
+`;
+
+exports[`CommentModal snapshots layout: edit existing comment 1`] = `
+"
+
+
+
+
+╭─ Edit Comment ───────────────────────────────────────────────────────────────╮
+│                                                                              │
+│  Existing comment text                                                       │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│  Enter save · Shift+Enter new line · Escape cancel · Ctrl+D delete           │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯"
+`;
+
+exports[`CommentModal snapshots layout: stale comment 1`] = `
+"
+
+
+
+
+╭─ Edit Comment ───────────────────────────────────────────────────────────────╮
+│                                                                              │
+│  Existing comment text                                                       │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│  Enter save · Shift+Enter new line · Escape cancel · Ctrl+D delete           │
+│  ⚠ This comment may be stale — the line has changed.                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯"
+`;

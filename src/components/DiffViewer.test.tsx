@@ -1,4 +1,4 @@
-import { describe, test, expect, afterEach } from "bun:test";
+import { describe, test, expect, afterEach, mock } from "bun:test";
 import { act } from "react";
 import { testRender } from "@opentui/react/test-utils";
 import type { ReactNode } from "react";
@@ -7,6 +7,7 @@ import { DiffViewer } from "./DiffViewer";
 import type { FileDiff } from "../lib/git";
 import { serializeFrameStyled, serializeFrameText } from "../lib/test/serialize-frame";
 import { theme } from "../lib/themes/default";
+import type { DiffComment } from "../hooks/diff-comments";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -417,6 +418,145 @@ describe("DiffViewer", () => {
       );
 
       await pressKeyAndRender(testSetup, "j");
+
+      expect(serializeFrameStyled(testSetup.captureSpans())).toMatchSnapshot();
+    });
+  });
+
+  describe("comments", () => {
+    function makeComment(overrides: Partial<DiffComment> = {}): DiffComment {
+      return {
+        id: "comment-1",
+        filePath: "src/utils.ts",
+        commitSha: "uncommitted",
+        diffLineIndex: 3,
+        lineContent: " }",
+        lineType: "context",
+        text: "Needs review",
+        createdAt: 1000,
+        updatedAt: 1000,
+        stale: false,
+        ...overrides,
+      };
+    }
+
+    test("comment indicator shows on non-highlighted line", async () => {
+      const commentedLines = new Map([[3, makeComment()]]);
+
+      testSetup = await mount(
+        <Wrapper>
+          <DiffViewer diff={SIMPLE_DIFF} focused commentedLines={commentedLines} />
+        </Wrapper>,
+      );
+
+      // Line 0 is highlighted (current), line 3 should have comment gutter
+      const frame = testSetup.captureSpans();
+      const commentGutterHex = theme.commentGutter.toLowerCase();
+
+      const line3Spans = frame.lines[3]?.spans ?? [];
+      const hasCommentGutter = line3Spans.some((span) => {
+        if (span.bg.a === 0) return false;
+        return (rgbToHex(span.bg) as string).toLowerCase() === commentGutterHex;
+      });
+      expect(hasCommentGutter).toBe(true);
+    });
+
+    test("stale comment shows stale gutter color", async () => {
+      const commentedLines = new Map([[3, makeComment({ stale: true })]]);
+
+      testSetup = await mount(
+        <Wrapper>
+          <DiffViewer diff={SIMPLE_DIFF} focused commentedLines={commentedLines} />
+        </Wrapper>,
+      );
+
+      const frame = testSetup.captureSpans();
+      const staleGutterHex = theme.commentStaleGutter.toLowerCase();
+
+      const line3Spans = frame.lines[3]?.spans ?? [];
+      const hasStaleGutter = line3Spans.some((span) => {
+        if (span.bg.a === 0) return false;
+        return (rgbToHex(span.bg) as string).toLowerCase() === staleGutterHex;
+      });
+      expect(hasStaleGutter).toBe(true);
+    });
+
+    test("highlight overrides comment gutter when on same line", async () => {
+      // Comment on line 0 (which is the initially highlighted line)
+      const commentedLines = new Map([[0, makeComment({ diffLineIndex: 0 })]]);
+
+      testSetup = await mount(
+        <Wrapper>
+          <DiffViewer diff={SIMPLE_DIFF} focused commentedLines={commentedLines} />
+        </Wrapper>,
+      );
+
+      // Line 0 should have highlight color, not comment color
+      const highlighted = getHighlightedLines(testSetup);
+      expect(highlighted).toEqual([0]);
+    });
+
+    test("comment gutter restored after highlight moves away", async () => {
+      const commentedLines = new Map([[0, makeComment({ diffLineIndex: 0 })]]);
+
+      testSetup = await mount(
+        <Wrapper>
+          <DiffViewer diff={SIMPLE_DIFF} focused commentedLines={commentedLines} />
+        </Wrapper>,
+      );
+
+      // Move highlight to line 1
+      await pressKeyAndRender(testSetup, "j");
+
+      // Line 0 should now show comment gutter, not highlight
+      const frame = testSetup.captureSpans();
+      const commentGutterHex = theme.commentGutter.toLowerCase();
+      const line0Spans = frame.lines[0]?.spans ?? [];
+      const hasCommentGutter = line0Spans.some((span) => {
+        if (span.bg.a === 0) return false;
+        return (rgbToHex(span.bg) as string).toLowerCase() === commentGutterHex;
+      });
+      expect(hasCommentGutter).toBe(true);
+    });
+
+    test("onLineSelected called with initial line on mount", async () => {
+      const onLineSelected = mock(() => {});
+
+      testSetup = await mount(
+        <Wrapper>
+          <DiffViewer diff={SIMPLE_DIFF} focused onLineSelected={onLineSelected} />
+        </Wrapper>,
+      );
+
+      expect(onLineSelected).toHaveBeenCalledWith(0);
+    });
+
+    test("onLineSelected called with new index after navigation", async () => {
+      const onLineSelected = mock(() => {});
+
+      testSetup = await mount(
+        <Wrapper>
+          <DiffViewer diff={SIMPLE_DIFF} focused onLineSelected={onLineSelected} />
+        </Wrapper>,
+      );
+
+      await pressKeyAndRender(testSetup, "j");
+      await pressKeyAndRender(testSetup, "j");
+
+      expect(onLineSelected).toHaveBeenLastCalledWith(2);
+    });
+
+    test("visual: comment indicator snapshot", async () => {
+      const commentedLines = new Map([
+        [2, makeComment({ diffLineIndex: 2 })],
+        [4, makeComment({ diffLineIndex: 4, stale: true })],
+      ]);
+
+      testSetup = await mount(
+        <Wrapper>
+          <DiffViewer diff={SIMPLE_DIFF} focused commentedLines={commentedLines} />
+        </Wrapper>,
+      );
 
       expect(serializeFrameStyled(testSetup.captureSpans())).toMatchSnapshot();
     });
