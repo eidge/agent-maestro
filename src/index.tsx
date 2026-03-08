@@ -15,6 +15,10 @@ const renderer = await createCliRenderer({
   },
 });
 
+// The app registers many keyboard shortcuts (each adds a "keypress" listener).
+// Raise the limit above the default 10 to avoid spurious Node warnings.
+renderer.keyInput.setMaxListeners(50);
+
 renderer.keyInput.on("keypress", (key) => {
   if (key.shift && key.name === "i") {
     renderer.console.toggle();

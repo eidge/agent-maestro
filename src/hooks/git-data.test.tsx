@@ -14,14 +14,6 @@ import {
 } from "./git-data";
 
 // ---------------------------------------------------------------------------
-// Global type declaration
-// ---------------------------------------------------------------------------
-
-declare global {
-  var IS_REACT_ACT_ENVIRONMENT: boolean;
-}
-
-// ---------------------------------------------------------------------------
 // Factories
 // ---------------------------------------------------------------------------
 
@@ -48,7 +40,19 @@ function makeFile(
 // Mock GitProvider
 // ---------------------------------------------------------------------------
 
+/**
+ * Delay by one macrotask tick. This prevents mock git promises from resolving
+ * in the microtask gap between `testRender` returning (with
+ * IS_REACT_ACT_ENVIRONMENT still true) and test code setting the flag to
+ * false. Without this, resolved promises trigger React state updates that
+ * produce "not wrapped in act(...)" warnings.
+ */
+function tick(): Promise<void> {
+  return new Promise((r) => setTimeout(r, 0));
+}
+
 class MockGit implements GitProvider {
+  baseBranch = "main";
   branch = "feature/test";
   commits: CommitInfo[] = [];
   uncommittedFiles: ChangedFile[] = [];
@@ -57,21 +61,31 @@ class MockGit implements GitProvider {
   isRepo = true;
 
   async isGitRepo() {
+    await tick();
     return this.isRepo;
   }
+  async getBaseBranchName() {
+    await tick();
+    return this.baseBranch;
+  }
   async getCurrentBranchName() {
+    await tick();
     return this.branch;
   }
   async getCommitsSinceBase() {
+    await tick();
     return this.commits;
   }
   async getUncommitedFiles() {
+    await tick();
     return this.uncommittedFiles;
   }
   async getChangedFilesForCommit(commit: CommitInfo) {
+    await tick();
     return this.committedFilesMap.get(commit.sha) ?? [];
   }
   async getFileDiff(file: ChangedFile) {
+    await tick();
     return (
       this.diffs.get(`${file.commitSha}:${file.path}`) ?? {
         path: file.path,
@@ -89,6 +103,8 @@ type TestSetup = Awaited<ReturnType<typeof testRender>>;
 
 async function mount(jsx: ReactNode, opts = { width: 80, height: 20 }): Promise<TestSetup> {
   const ts = await testRender(jsx, opts);
+  // testRender sets IS_REACT_ACT_ENVIRONMENT = true. Disable it while we
+  // render outside of act() so React doesn't warn about deferred updates.
   globalThis.IS_REACT_ACT_ENVIRONMENT = false;
   await ts.renderOnce();
   return ts;
@@ -100,7 +116,10 @@ async function mount(jsx: ReactNode, opts = { width: 80, height: 20 }): Promise<
  * to flush all resulting state updates.
  */
 async function waitAndRender(setup: TestSetup, ms = 20) {
-  // Let async effect callbacks (promise chains, setInterval ticks) complete
+  // Let async effect callbacks (promise chains, setInterval ticks) complete.
+  // Keep IS_REACT_ACT_ENVIRONMENT false during the wait so React doesn't warn
+  // about state updates triggered by resolved promises.
+  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
   await new Promise((r) => setTimeout(r, ms));
   // Flush pending state updates and re-render
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;

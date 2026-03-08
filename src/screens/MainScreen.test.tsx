@@ -7,8 +7,19 @@ import { serializeFrameStyled, serializeFrameText } from "../lib/test/serialize-
 import { MainScreen } from "./MainScreen";
 
 // ---------------------------------------------------------------------------
-// Mock GitProvider — resolves immediately with canned data
+// Mock GitProvider — resolves after one macrotask tick
 // ---------------------------------------------------------------------------
+
+/**
+ * Delay by one macrotask tick. This prevents mock git promises from resolving
+ * in the microtask gap between `testRender` returning (with
+ * IS_REACT_ACT_ENVIRONMENT still true) and test code setting the flag to
+ * false. Without this, resolved promises trigger React state updates that
+ * produce "not wrapped in act(...)" warnings.
+ */
+function tick(): Promise<void> {
+  return new Promise((r) => setTimeout(r, 0));
+}
 
 class SnapshotGit {
   branch: string;
@@ -20,7 +31,12 @@ class SnapshotGit {
   isRepo = true;
 
   async isGitRepo() {
+    await tick();
     return this.isRepo;
+  }
+  async getBaseBranchName() {
+    await tick();
+    return "main";
   }
 
   constructor(data: Partial<GitData>) {
@@ -43,18 +59,23 @@ class SnapshotGit {
   }
 
   async getCurrentBranchName() {
+    await tick();
     return this.branch;
   }
   async getCommitsSinceBase() {
+    await tick();
     return this.commits;
   }
   async getUncommitedFiles() {
+    await tick();
     return this.uncommittedFiles;
   }
   async getChangedFilesForCommit(commit: CommitInfo) {
+    await tick();
     return this.committedFilesMap.get(commit.sha) ?? [];
   }
   async getFileDiff(file: ChangedFile) {
+    await tick();
     return (
       this.diffs.get(`${file.commitSha}:${file.path}`) ?? {
         path: file.path,
@@ -146,13 +167,15 @@ async function mountMainScreen(
     opts,
   );
 
+  const { act } = await import("react");
+  // testRender sets IS_REACT_ACT_ENVIRONMENT = true. Disable it while we
+  // render outside of act() so React doesn't warn about deferred updates.
   globalThis.IS_REACT_ACT_ENVIRONMENT = false;
   // Initial render
   await ts.renderOnce();
   // Wait for async git calls to resolve + re-render
   await new Promise((r) => setTimeout(r, 30));
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-  const { act } = await import("react");
   await act(async () => {
     await ts.renderOnce();
   });
@@ -209,11 +232,11 @@ describe("MainScreen", () => {
         { width: 120, height: 35 },
       );
 
+      const { act } = await import("react");
       globalThis.IS_REACT_ACT_ENVIRONMENT = false;
       await testSetup.renderOnce();
       await new Promise((r) => setTimeout(r, 30));
       globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-      const { act } = await import("react");
       await act(async () => {
         await testSetup.renderOnce();
       });
@@ -234,11 +257,11 @@ describe("MainScreen", () => {
         { width: 120, height: 35 },
       );
 
+      const { act } = await import("react");
       globalThis.IS_REACT_ACT_ENVIRONMENT = false;
       await testSetup.renderOnce();
       await new Promise((r) => setTimeout(r, 30));
       globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-      const { act } = await import("react");
       await act(async () => {
         await testSetup.renderOnce();
       });

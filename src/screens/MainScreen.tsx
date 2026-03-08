@@ -26,6 +26,7 @@ export function MainScreen({ git }: MainScreenProps = {}) {
   const {
     loading,
     notGitRepo,
+    baseBranchName,
     branchName,
     commits,
     uncommitedFiles,
@@ -134,6 +135,7 @@ export function MainScreen({ git }: MainScreenProps = {}) {
           {/* Commits select */}
           <Panel title="Commits" height={20}>
             <CommitSelector
+              baseBranchName={baseBranchName}
               commits={commits}
               uncommitedFileCount={uncommitedFiles.length}
               selectedCommit={selectedCommit}

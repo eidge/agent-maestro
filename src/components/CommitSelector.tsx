@@ -5,6 +5,7 @@ import { theme } from "../lib/themes/default";
 export type SelectedCommit = { kind: "uncommitted" } | { kind: "commit"; commit: CommitInfo };
 
 export interface CommitSelectorProps {
+  baseBranchName?: string;
   commits: CommitInfo[];
   uncommitedFileCount: number;
   selectedCommit: SelectedCommit | null;
@@ -13,6 +14,7 @@ export interface CommitSelectorProps {
 }
 
 export function CommitSelector({
+  baseBranchName,
   commits,
   uncommitedFileCount,
   selectedCommit,
@@ -62,7 +64,9 @@ export function CommitSelector({
   );
 
   if (selectOptions.length === 0) {
-    return <text fg={theme.textMuted}>no commits</text>;
+    return (
+      <text fg={theme.textMuted}>no commits{baseBranchName ? ` since ${baseBranchName}` : ""}</text>
+    );
   }
 
   return (

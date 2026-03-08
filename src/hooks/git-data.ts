@@ -5,6 +5,7 @@ import type { SelectedCommit } from "../components/CommitSelector";
 /** The subset of {@link Git} that {@link useGitData} depends on. */
 export interface GitProvider {
   isGitRepo(): Promise<boolean>;
+  getBaseBranchName(): Promise<string>;
   getCurrentBranchName(): Promise<string>;
   getCommitsSinceBase(): Promise<CommitInfo[]>;
   getUncommitedFiles(): Promise<ChangedFile[]>;
@@ -49,6 +50,7 @@ export function isSelectedFileValid(selected: ChangedFile | null, files: Changed
 export interface GitData {
   loading: boolean;
   notGitRepo: boolean;
+  baseBranchName: string | undefined;
   branchName: string | undefined;
   commits: CommitInfo[];
   uncommitedFiles: ChangedFile[];
@@ -69,6 +71,7 @@ export function useGitData(options?: UseGitDataOptions): GitData {
   const git = useMemo(() => options?.git ?? new Git(), [options?.git]);
   const [loading, setLoading] = useState(true);
   const [notGitRepo, setNotGitRepo] = useState(false);
+  const [baseBranchName, setBaseBranchName] = useState<string>();
   const [branchName, setBranchName] = useState<string>();
   const [commits, setCommits] = useState<CommitInfo[]>([]);
   const [uncommitedFiles, setUncommitedFiles] = useState<ChangedFile[]>([]);
@@ -100,7 +103,8 @@ export function useGitData(options?: UseGitDataOptions): GitData {
         return;
       }
 
-      const [branch, newCommits, uncommitted] = await Promise.all([
+      const [baseBranchName, branch, newCommits, uncommitted] = await Promise.all([
+        git.getBaseBranchName(),
         git.getCurrentBranchName(),
         git.getCommitsSinceBase(),
         git.getUncommitedFiles(),
@@ -110,6 +114,8 @@ export function useGitData(options?: UseGitDataOptions): GitData {
         newCommits.map((c) => git.getChangedFilesForCommit(c)),
       );
       const committed = committedRequests.flat();
+
+      setBaseBranchName((prev) => (prev === baseBranchName ? prev : baseBranchName));
 
       // Only update state when data has actually changed
       if (branch !== prevBranch) {
@@ -181,6 +187,7 @@ export function useGitData(options?: UseGitDataOptions): GitData {
   return {
     loading,
     notGitRepo,
+    baseBranchName,
     branchName,
     commits,
     uncommitedFiles,

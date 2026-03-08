@@ -80,7 +80,7 @@ exports[`MainScreen snapshots layout: no diffs to display 1`] = `
    █▀█ █▄█ ██▄ █ ▀█  █     █ ▀ █ █▀█ ██▄ ▄▄█  █  █▀▄ █▄█ feature/test
 
   ╭─ Commits ──────────────────────────────────────╮  ╭──────────────────────────────────────────────────────────────╮
-  │ no commits                                     │  │                                                              │
+  │ no commits since main                          │  │                                                              │
   │                                                │  │                                                              │
   │                                                │  │                                                              │
   │                                                │  │                                                              │
