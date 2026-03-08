@@ -13,56 +13,29 @@ import {
 } from "./keyboard";
 
 // ---------------------------------------------------------------------------
-// Global type declaration
-// ---------------------------------------------------------------------------
-
-// Set by @opentui/react test-utils; controls React act() warnings.
-declare global {
-  var IS_REACT_ACT_ENVIRONMENT: boolean;
-}
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 type TestSetup = Awaited<ReturnType<typeof testRender>>;
 
-/**
- * Create the test renderer and perform the initial render.
- *
- * `testRender` enables `IS_REACT_ACT_ENVIRONMENT`, but OpenTUI's internal
- * Root component performs a state update during `renderOnce()` that is not
- * wrapped in `act()` — this is a reconciler-level false positive (verified:
- * even `<text>hello</text>` with zero state/effects triggers it). We disable
- * the flag after setup so the unavoidable framework warning is not emitted.
- */
 async function mount(
   jsx: ReactNode,
   opts: { width: number; height: number; kittyKeyboard?: boolean },
 ): Promise<TestSetup> {
   const ts = await testRender(jsx, opts);
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
   await ts.renderOnce();
   return ts;
 }
 
-/**
- * Press a key and flush the resulting React state updates.
- *
- * We temporarily re-enable the act environment so `act()` correctly batches
- * and flushes state, then disable it again before the next bare `renderOnce`.
- */
 async function pressKeyAndRender(
   setup: TestSetup,
   key: string,
   modifiers?: { shift?: boolean; ctrl?: boolean; meta?: boolean; super?: boolean; hyper?: boolean },
 ) {
-  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   await act(async () => {
     setup.mockInput.pressKey(key, modifiers);
     await setup.renderOnce();
   });
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
   // Extra render cycle needed in kitty keyboard mode to flush state updates
   // triggered by keyboard event callbacks.
   await setup.renderOnce();
@@ -160,7 +133,7 @@ describe("useKeyboardShortcut", () => {
   let testSetup: TestSetup;
 
   afterEach(() => {
-    if (testSetup) testSetup.renderer.destroy();
+    if (testSetup) act(() => testSetup.renderer.destroy());
   });
 
   test("calls callback when matching key is pressed", async () => {
@@ -185,14 +158,12 @@ describe("useKeyboardShortcut", () => {
       { width: 40, height: 10 },
     );
 
-    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
     await act(async () => {
       testSetup.mockInput.pressKey("x");
       testSetup.mockInput.pressKey("x");
       testSetup.mockInput.pressKey("x");
       await testSetup.renderOnce();
     });
-    globalThis.IS_REACT_ACT_ENVIRONMENT = false;
 
     expect(testSetup.captureCharFrame()).toContain("x-count:3");
   });
@@ -318,7 +289,7 @@ describe("useKeyboardShortcutRegistry", () => {
   let testSetup: TestSetup;
 
   afterEach(() => {
-    if (testSetup) testSetup.renderer.destroy();
+    if (testSetup) act(() => testSetup.renderer.destroy());
   });
 
   test("returns empty registry when no shortcuts are registered", async () => {
@@ -413,7 +384,7 @@ describe("useKeyboardShortcut with composite keys", () => {
   let testSetup: TestSetup;
 
   afterEach(() => {
-    if (testSetup) testSetup.renderer.destroy();
+    if (testSetup) act(() => testSetup.renderer.destroy());
   });
 
   test("ctrl-s fires only when ctrl is held", async () => {
@@ -546,7 +517,7 @@ describe("useKeyboardShortcut with key sequences", () => {
   let testSetup: TestSetup;
 
   afterEach(() => {
-    if (testSetup) testSetup.renderer.destroy();
+    if (testSetup) act(() => testSetup.renderer.destroy());
   });
 
   test("fires callback after the full sequence is pressed", async () => {

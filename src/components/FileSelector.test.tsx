@@ -13,7 +13,6 @@ type TestSetup = Awaited<ReturnType<typeof testRender>>;
 
 async function mount(jsx: ReactNode, opts = { width: 60, height: 20 }): Promise<TestSetup> {
   const ts = await testRender(jsx, opts);
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
   await ts.renderOnce();
   return ts;
 }
@@ -23,12 +22,10 @@ async function pressKeyAndRender(
   key: string,
   modifiers?: { shift?: boolean; ctrl?: boolean; meta?: boolean },
 ) {
-  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   await act(async () => {
     setup.mockInput.pressKey(key, modifiers);
     await setup.renderOnce();
   });
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
 }
 
 function makeFile(
@@ -79,7 +76,7 @@ describe("FileSelector", () => {
   let testSetup: TestSetup;
 
   afterEach(() => {
-    if (testSetup) testSetup.renderer.destroy();
+    if (testSetup) act(() => testSetup.renderer.destroy());
   });
 
   test("shows 'no changed files' when there are no files", async () => {

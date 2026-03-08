@@ -1,6 +1,6 @@
 import { describe, test, expect, afterEach } from "bun:test";
 import { testRender } from "@opentui/react/test-utils";
-import type { ReactNode } from "react";
+import { act, type ReactNode } from "react";
 import { Provider, createStore } from "jotai";
 import { ShortcutGroup, useKeyboardShortcut } from "../hooks/keyboard";
 import { HelpMenu } from "./HelpMenu";
@@ -10,15 +10,10 @@ import { serializeFrameStyled, serializeFrameText } from "../lib/test/serialize-
 // Helpers
 // ---------------------------------------------------------------------------
 
-declare global {
-  var IS_REACT_ACT_ENVIRONMENT: boolean;
-}
-
 type TestSetup = Awaited<ReturnType<typeof testRender>>;
 
 async function mount(jsx: ReactNode, opts = { width: 80, height: 30 }): Promise<TestSetup> {
   const ts = await testRender(jsx, opts);
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
   await ts.renderOnce();
   return ts;
 }
@@ -48,7 +43,7 @@ describe("HelpMenu", () => {
   let testSetup: TestSetup;
 
   afterEach(() => {
-    if (testSetup) testSetup.renderer.destroy();
+    if (testSetup) act(() => testSetup.renderer.destroy());
   });
 
   test("renders the panel title", async () => {

@@ -1,5 +1,6 @@
 import { describe, test, expect, afterEach } from "bun:test";
 import { testRender } from "@opentui/react/test-utils";
+import { act } from "react";
 import { serializeFrameStyled, serializeFrameText } from "../lib/test/serialize-frame";
 import { LoadingScreen } from "./LoadingScreen";
 
@@ -11,7 +12,6 @@ type TestSetup = Awaited<ReturnType<typeof testRender>>;
 
 async function mount(opts = { width: 60, height: 15 }): Promise<TestSetup> {
   const ts = await testRender(<LoadingScreen />, opts);
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
   await ts.renderOnce();
   return ts;
 }
@@ -24,7 +24,7 @@ describe("LoadingScreen", () => {
   let testSetup: TestSetup;
 
   afterEach(() => {
-    if (testSetup) testSetup.renderer.destroy();
+    if (testSetup) act(() => testSetup.renderer.destroy());
   });
 
   describe("snapshots", () => {

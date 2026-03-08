@@ -17,13 +17,11 @@ type TestSetup = Awaited<ReturnType<typeof testRender>>;
 
 async function mount(jsx: ReactNode, opts = { width: 80, height: 24 }): Promise<TestSetup> {
   const ts = await testRender(jsx, opts);
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
   await ts.renderOnce();
   return ts;
 }
 
 async function pressKeyAndRender(setup: TestSetup, key: string) {
-  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   await act(async () => {
     setup.mockInput.pressKey(key);
     await setup.renderOnce();
@@ -32,7 +30,6 @@ async function pressKeyAndRender(setup: TestSetup, key: string) {
   await act(async () => {
     await setup.renderOnce();
   });
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
 }
 
 /**
@@ -146,7 +143,7 @@ describe("DiffViewer", () => {
   let testSetup: TestSetup;
 
   afterEach(() => {
-    if (testSetup) testSetup.renderer.destroy();
+    if (testSetup) act(() => testSetup.renderer.destroy());
   });
 
   describe("layout snapshots", () => {

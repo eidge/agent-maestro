@@ -1,6 +1,6 @@
 import { describe, test, expect, afterEach } from "bun:test";
 import { testRender } from "@opentui/react/test-utils";
-import type { ReactNode } from "react";
+import { act, type ReactNode } from "react";
 import { Panel } from "./Panel";
 import { serializeFrameStyled, serializeFrameText } from "../../lib/test/serialize-frame";
 
@@ -12,7 +12,6 @@ type TestSetup = Awaited<ReturnType<typeof testRender>>;
 
 async function mount(jsx: ReactNode, opts = { width: 40, height: 10 }): Promise<TestSetup> {
   const ts = await testRender(jsx, opts);
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
   await ts.renderOnce();
   return ts;
 }
@@ -25,7 +24,7 @@ describe("Panel", () => {
   let testSetup: TestSetup;
 
   afterEach(() => {
-    if (testSetup) testSetup.renderer.destroy();
+    if (testSetup) act(() => testSetup.renderer.destroy());
   });
 
   describe("snapshots", () => {

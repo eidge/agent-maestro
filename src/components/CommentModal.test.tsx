@@ -1,6 +1,6 @@
 import { describe, test, expect, afterEach } from "bun:test";
 import { testRender } from "@opentui/react/test-utils";
-import type { ReactNode } from "react";
+import { act, type ReactNode } from "react";
 import { Provider, createStore } from "jotai";
 import { CommentModal, type CommentModalProps } from "./CommentModal";
 import { serializeFrameText } from "../lib/test/serialize-frame";
@@ -55,7 +55,6 @@ async function mount(
     </Wrapper>,
     opts,
   );
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
   await ts.renderOnce();
   return ts;
 }
@@ -68,7 +67,7 @@ describe("CommentModal", () => {
   let testSetup: TestSetup;
 
   afterEach(() => {
-    if (testSetup) testSetup.renderer.destroy();
+    if (testSetup) act(() => testSetup.renderer.destroy());
   });
 
   describe("rendering", () => {

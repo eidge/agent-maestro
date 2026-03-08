@@ -1,5 +1,6 @@
 import { describe, test, expect, afterEach, mock } from "bun:test";
 import { testRender } from "@opentui/react/test-utils";
+import { act } from "react";
 import { serializeFrameStyled, serializeFrameText } from "../lib/test/serialize-frame";
 import { NotGitRepoScreen } from "./NotGitRepoScreen";
 
@@ -14,7 +15,6 @@ async function mount(
   opts = { width: 60, height: 15 },
 ): Promise<TestSetup> {
   const ts = await testRender(<NotGitRepoScreen {...props} />, opts);
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
   await ts.renderOnce();
   return ts;
 }
@@ -27,7 +27,7 @@ describe("NotGitRepoScreen", () => {
   let testSetup: TestSetup;
 
   afterEach(() => {
-    if (testSetup) testSetup.renderer.destroy();
+    if (testSetup) act(() => testSetup.renderer.destroy());
   });
 
   describe("snapshots", () => {

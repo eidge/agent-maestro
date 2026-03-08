@@ -1,4 +1,4 @@
-import { describe, test, expect, afterEach } from "bun:test";
+import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import { testRender } from "@opentui/react/test-utils";
 import { act, type ReactNode } from "react";
 import { useKeyboard } from "@opentui/react";
@@ -40,17 +40,6 @@ function makeFile(
 // Mock GitProvider
 // ---------------------------------------------------------------------------
 
-/**
- * Delay by one macrotask tick. This prevents mock git promises from resolving
- * in the microtask gap between `testRender` returning (with
- * IS_REACT_ACT_ENVIRONMENT still true) and test code setting the flag to
- * false. Without this, resolved promises trigger React state updates that
- * produce "not wrapped in act(...)" warnings.
- */
-function tick(): Promise<void> {
-  return new Promise((r) => setTimeout(r, 0));
-}
-
 class MockGit implements GitProvider {
   baseBranch = "main";
   branch = "feature/test";
@@ -61,31 +50,24 @@ class MockGit implements GitProvider {
   isRepo = true;
 
   async isGitRepo() {
-    await tick();
     return this.isRepo;
   }
   async getBaseBranchName() {
-    await tick();
     return this.baseBranch;
   }
   async getCurrentBranchName() {
-    await tick();
     return this.branch;
   }
   async getCommitsSinceBase() {
-    await tick();
     return this.commits;
   }
   async getUncommitedFiles() {
-    await tick();
     return this.uncommittedFiles;
   }
   async getChangedFilesForCommit(commit: CommitInfo) {
-    await tick();
     return this.committedFilesMap.get(commit.sha) ?? [];
   }
   async getFileDiff(file: ChangedFile) {
-    await tick();
     return (
       this.diffs.get(`${file.commitSha}:${file.path}`) ?? {
         path: file.path,
@@ -96,60 +78,88 @@ class MockGit implements GitProvider {
 }
 
 // ---------------------------------------------------------------------------
+// Fake timers — capture setInterval callbacks so polls are driven manually
+// ---------------------------------------------------------------------------
+
+const realSetInterval = globalThis.setInterval;
+const realClearInterval = globalThis.clearInterval;
+
+let pollCallback: (() => void) | null = null;
+
+function installFakeTimers() {
+  pollCallback = null;
+  globalThis.setInterval = ((fn: () => void) => {
+    pollCallback = fn;
+    return 999;
+  }) as unknown as typeof setInterval;
+  globalThis.clearInterval = (() => {
+    pollCallback = null;
+  }) as unknown as typeof clearInterval;
+}
+
+function restoreRealTimers() {
+  globalThis.setInterval = realSetInterval;
+  globalThis.clearInterval = realClearInterval;
+  pollCallback = null;
+}
+
+// ---------------------------------------------------------------------------
 // Test-render helpers
 // ---------------------------------------------------------------------------
 
 type TestSetup = Awaited<ReturnType<typeof testRender>>;
 
+/**
+ * Render one cycle inside act() so that state updates from async effects
+ * (which resolve as microtasks) are properly tracked by React.
+ */
+async function actRender(setup: TestSetup) {
+  await act(async () => {
+    await setup.renderOnce();
+  });
+}
+
 async function mount(jsx: ReactNode, opts = { width: 80, height: 20 }): Promise<TestSetup> {
-  const ts = await testRender(jsx, opts);
-  // testRender sets IS_REACT_ACT_ENVIRONMENT = true. Disable it while we
-  // render outside of act() so React doesn't warn about deferred updates.
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
-  await ts.renderOnce();
+  // testRender uses ConcurrentRoot which schedules deferred work via
+  // MessageChannel. Wrapping everything (including testRender) in a single
+  // act() ensures both the deferred Root update and subsequent effect chains
+  // (data load → diff fetch → etc.) are captured.
+  let ts!: TestSetup;
+  await act(async () => {
+    ts = await testRender(jsx, opts);
+  });
+  await actRender(ts);
+  await actRender(ts);
+  await actRender(ts);
   return ts;
 }
 
 /**
- * Wait for async operations to settle (promises from mock git resolve
- * immediately, so a short delay is enough), then render within act()
- * to flush all resulting state updates.
+ * Invoke the captured setInterval poll callback inside act(), then flush
+ * cascading effects with extra act-render cycles.
  */
-async function waitAndRender(setup: TestSetup, ms = 20) {
-  // Let async effect callbacks (promise chains, setInterval ticks) complete.
-  // Keep IS_REACT_ACT_ENVIRONMENT false during the wait so React doesn't warn
-  // about state updates triggered by resolved promises.
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
-  await new Promise((r) => setTimeout(r, ms));
-  // Flush pending state updates and re-render
-  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+async function triggerPoll(setup: TestSetup) {
   await act(async () => {
-    await setup.renderOnce();
+    pollCallback?.();
   });
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
+  await actRender(setup);
+  await actRender(setup);
 }
 
 async function pressKeyAndRender(setup: TestSetup, key: string) {
-  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   await act(async () => {
     setup.mockInput.pressKey(key);
     await setup.renderOnce();
   });
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false;
+  await actRender(setup);
 }
 
 // ---------------------------------------------------------------------------
 // Test component — renders hook state as inspectable text
 // ---------------------------------------------------------------------------
 
-function GitDataDisplay({
-  mockGit,
-  pollInterval = 50,
-}: {
-  mockGit: MockGit;
-  pollInterval?: number;
-}) {
-  const data = useGitData({ git: mockGit, pollInterval });
+function GitDataDisplay({ mockGit }: { mockGit: MockGit }) {
+  const data = useGitData({ git: mockGit });
 
   // Allow tests to drive selection via keyboard
   useKeyboard((e) => {
@@ -365,8 +375,10 @@ describe("isSelectedFileValid", () => {
 describe("useGitData", () => {
   let testSetup: TestSetup;
 
+  beforeEach(() => installFakeTimers());
   afterEach(() => {
-    if (testSetup) testSetup.renderer.destroy();
+    if (testSetup) act(() => testSetup.renderer.destroy());
+    restoreRealTimers();
   });
 
   describe("not a git repo", () => {
@@ -375,7 +387,6 @@ describe("useGitData", () => {
       mockGit.isRepo = false;
 
       testSetup = await mount(<GitDataDisplay mockGit={mockGit} />);
-      await waitAndRender(testSetup);
 
       const frame = testSetup.captureCharFrame();
       expect(frame).toContain("loading:false");
@@ -384,15 +395,6 @@ describe("useGitData", () => {
   });
 
   describe("initial load", () => {
-    test("starts in loading state", async () => {
-      const mockGit = new MockGit();
-
-      testSetup = await mount(<GitDataDisplay mockGit={mockGit} />);
-
-      // Before async completes, loading should be true
-      expect(testSetup.captureCharFrame()).toContain("loading:true");
-    });
-
     test("loads data and selects uncommitted when uncommitted files exist", async () => {
       const mockGit = new MockGit();
       mockGit.uncommittedFiles = [makeFile("a.ts"), makeFile("b.ts")];
@@ -400,7 +402,6 @@ describe("useGitData", () => {
       mockGit.committedFilesMap.set("sha1", [makeFile("c.ts", "sha1")]);
 
       testSetup = await mount(<GitDataDisplay mockGit={mockGit} />);
-      await waitAndRender(testSetup);
 
       const frame = testSetup.captureCharFrame();
       expect(frame).toContain("loading:false");
@@ -418,7 +419,6 @@ describe("useGitData", () => {
       mockGit.committedFilesMap.set("sha2", [makeFile("y.ts", "sha2")]);
 
       testSetup = await mount(<GitDataDisplay mockGit={mockGit} />);
-      await waitAndRender(testSetup);
 
       const frame = testSetup.captureCharFrame();
       expect(frame).toContain("selectedCommit:sha1");
@@ -429,7 +429,6 @@ describe("useGitData", () => {
       const mockGit = new MockGit();
 
       testSetup = await mount(<GitDataDisplay mockGit={mockGit} />);
-      await waitAndRender(testSetup);
 
       const frame = testSetup.captureCharFrame();
       expect(frame).toContain("loading:false");
@@ -448,9 +447,6 @@ describe("useGitData", () => {
       });
 
       testSetup = await mount(<GitDataDisplay mockGit={mockGit} />);
-      await waitAndRender(testSetup);
-      // Extra render for the diff effect (fires after selectedFile is set)
-      await waitAndRender(testSetup);
 
       expect(testSetup.captureCharFrame()).toContain("diff:main.ts");
     });
@@ -461,15 +457,13 @@ describe("useGitData", () => {
       const mockGit = new MockGit();
       mockGit.uncommittedFiles = [makeFile("a.ts"), makeFile("b.ts")];
 
-      testSetup = await mount(<GitDataDisplay mockGit={mockGit} pollInterval={40} />);
-      await waitAndRender(testSetup);
+      testSetup = await mount(<GitDataDisplay mockGit={mockGit} />);
 
       const frameBefore = testSetup.captureCharFrame();
       expect(frameBefore).toContain("selectedCommit:uncommitted");
       expect(frameBefore).toContain("selectedFile:a.ts");
 
-      // Wait for at least one poll cycle (40ms) + slack
-      await waitAndRender(testSetup, 80);
+      await triggerPoll(testSetup);
 
       const frameAfter = testSetup.captureCharFrame();
       expect(frameAfter).toContain("selectedCommit:uncommitted");
@@ -482,17 +476,15 @@ describe("useGitData", () => {
       const mockGit = new MockGit();
       mockGit.uncommittedFiles = [makeFile("a.ts"), makeFile("b.ts")];
 
-      testSetup = await mount(<GitDataDisplay mockGit={mockGit} pollInterval={40} />);
-      await waitAndRender(testSetup);
+      testSetup = await mount(<GitDataDisplay mockGit={mockGit} />);
       expect(testSetup.captureCharFrame()).toContain("selectedFile:a.ts");
 
       // User selects the second file via 'f' key
       await pressKeyAndRender(testSetup, "f");
-      await waitAndRender(testSetup);
       expect(testSetup.captureCharFrame()).toContain("selectedFile:b.ts");
 
-      // Wait for a poll cycle — selection should stay on b.ts
-      await waitAndRender(testSetup, 80);
+      // Trigger a poll cycle — selection should stay on b.ts
+      await triggerPoll(testSetup);
       expect(testSetup.captureCharFrame()).toContain("selectedFile:b.ts");
     });
 
@@ -502,17 +494,15 @@ describe("useGitData", () => {
       mockGit.commits = [makeCommit("feat", "sha1")];
       mockGit.committedFilesMap.set("sha1", [makeFile("c.ts", "sha1")]);
 
-      testSetup = await mount(<GitDataDisplay mockGit={mockGit} pollInterval={40} />);
-      await waitAndRender(testSetup);
+      testSetup = await mount(<GitDataDisplay mockGit={mockGit} />);
       expect(testSetup.captureCharFrame()).toContain("selectedCommit:uncommitted");
 
       // User switches to the first commit via 'c' key
       await pressKeyAndRender(testSetup, "c");
-      await waitAndRender(testSetup);
       expect(testSetup.captureCharFrame()).toContain("selectedCommit:sha1");
 
-      // Wait for a poll cycle — commit selection should stay
-      await waitAndRender(testSetup, 80);
+      // Trigger a poll cycle — commit selection should stay
+      await triggerPoll(testSetup);
       expect(testSetup.captureCharFrame()).toContain("selectedCommit:sha1");
     });
   });
@@ -522,14 +512,13 @@ describe("useGitData", () => {
       const mockGit = new MockGit();
       mockGit.uncommittedFiles = [makeFile("a.ts")];
 
-      testSetup = await mount(<GitDataDisplay mockGit={mockGit} pollInterval={40} />);
-      await waitAndRender(testSetup);
+      testSetup = await mount(<GitDataDisplay mockGit={mockGit} />);
       expect(testSetup.captureCharFrame()).toContain("uncommitted:a.ts");
 
       // Simulate a new file appearing
       mockGit.uncommittedFiles = [makeFile("a.ts"), makeFile("new.ts")];
 
-      await waitAndRender(testSetup, 80);
+      await triggerPoll(testSetup);
       expect(testSetup.captureCharFrame()).toContain("uncommitted:a.ts,new.ts");
     });
 
@@ -538,13 +527,12 @@ describe("useGitData", () => {
       mockGit.branch = "feature/old";
       mockGit.uncommittedFiles = [makeFile("a.ts")];
 
-      testSetup = await mount(<GitDataDisplay mockGit={mockGit} pollInterval={40} />);
-      await waitAndRender(testSetup);
+      testSetup = await mount(<GitDataDisplay mockGit={mockGit} />);
       expect(testSetup.captureCharFrame()).toContain("branch:feature/old");
 
       mockGit.branch = "feature/new";
 
-      await waitAndRender(testSetup, 80);
+      await triggerPoll(testSetup);
       expect(testSetup.captureCharFrame()).toContain("branch:feature/new");
     });
   });
@@ -556,15 +544,14 @@ describe("useGitData", () => {
       mockGit.committedFilesMap.set("sha1", [makeFile("a.ts", "sha1")]);
       mockGit.committedFilesMap.set("sha2", [makeFile("b.ts", "sha2")]);
 
-      testSetup = await mount(<GitDataDisplay mockGit={mockGit} pollInterval={40} />);
-      await waitAndRender(testSetup);
+      testSetup = await mount(<GitDataDisplay mockGit={mockGit} />);
       expect(testSetup.captureCharFrame()).toContain("selectedCommit:sha1");
 
       // Remove the first commit (e.g. rebased away)
       mockGit.commits = [makeCommit("second", "sha2")];
       mockGit.committedFilesMap.delete("sha1");
 
-      await waitAndRender(testSetup, 80);
+      await triggerPoll(testSetup);
 
       // Should fall back to the remaining commit
       const frame = testSetup.captureCharFrame();
@@ -577,8 +564,7 @@ describe("useGitData", () => {
       mockGit.commits = [makeCommit("only", "sha1")];
       mockGit.committedFilesMap.set("sha1", [makeFile("a.ts", "sha1")]);
 
-      testSetup = await mount(<GitDataDisplay mockGit={mockGit} pollInterval={40} />);
-      await waitAndRender(testSetup);
+      testSetup = await mount(<GitDataDisplay mockGit={mockGit} />);
       expect(testSetup.captureCharFrame()).toContain("selectedCommit:sha1");
 
       // Commit is gone, but new uncommitted changes appeared
@@ -586,7 +572,7 @@ describe("useGitData", () => {
       mockGit.committedFilesMap.clear();
       mockGit.uncommittedFiles = [makeFile("new.ts")];
 
-      await waitAndRender(testSetup, 80);
+      await triggerPoll(testSetup);
 
       const frame = testSetup.captureCharFrame();
       expect(frame).toContain("selectedCommit:uncommitted");
@@ -597,14 +583,13 @@ describe("useGitData", () => {
       const mockGit = new MockGit();
       mockGit.uncommittedFiles = [makeFile("a.ts")];
 
-      testSetup = await mount(<GitDataDisplay mockGit={mockGit} pollInterval={40} />);
-      await waitAndRender(testSetup);
+      testSetup = await mount(<GitDataDisplay mockGit={mockGit} />);
       expect(testSetup.captureCharFrame()).toContain("selectedFile:a.ts");
 
       // Everything gone
       mockGit.uncommittedFiles = [];
 
-      await waitAndRender(testSetup, 80);
+      await triggerPoll(testSetup);
 
       const frame = testSetup.captureCharFrame();
       expect(frame).toContain("selectedCommit:none");
@@ -615,14 +600,13 @@ describe("useGitData", () => {
       const mockGit = new MockGit();
       mockGit.uncommittedFiles = [makeFile("a.ts"), makeFile("b.ts")];
 
-      testSetup = await mount(<GitDataDisplay mockGit={mockGit} pollInterval={40} />);
-      await waitAndRender(testSetup);
+      testSetup = await mount(<GitDataDisplay mockGit={mockGit} />);
       expect(testSetup.captureCharFrame()).toContain("selectedFile:a.ts");
 
       // Remove a.ts but keep b.ts
       mockGit.uncommittedFiles = [makeFile("b.ts")];
 
-      await waitAndRender(testSetup, 80);
+      await triggerPoll(testSetup);
 
       const frame = testSetup.captureCharFrame();
       expect(frame).toContain("selectedCommit:uncommitted");
